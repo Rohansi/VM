@@ -20,7 +20,6 @@ namespace VM
         const int Height = 81;
         const int CharWidth = 6; 
         const int CharHeight = 8;
-        const int Framerate = 60;
 
         public static ConfigFile Config;
 
@@ -41,7 +40,7 @@ namespace VM
             TextDisplay.Initialize(CharWidth, CharHeight);
 
             window = new RenderWindow(new VideoMode(Width * CharWidth, Height * CharHeight), "", Styles.Close);
-            window.SetFramerateLimit(Framerate);
+            window.SetFramerateLimit(Config.Framerate);
             window.Closed += (sender, e) => window.Close();
 
             display = new TextDisplay(Width, Height);
@@ -119,7 +118,7 @@ namespace VM
                     try
                     {
                         var stopwatch = Stopwatch.StartNew();
-                        while (stopwatch.Elapsed.TotalSeconds < (1.0 / Framerate))
+                        while (stopwatch.Elapsed.TotalSeconds < (1.0 / Config.Framerate))
                         {
                             if (steps >= requestedSteps)
                                 break;
@@ -135,7 +134,7 @@ namespace VM
                 }
 
                 previousSteps.AddLast(steps);
-                if (previousSteps.Count > Framerate)
+                if (previousSteps.Count > Config.Framerate)
                     previousSteps.RemoveFirst();
                 #endregion
 

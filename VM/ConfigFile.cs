@@ -8,6 +8,9 @@ namespace VM
 {
     public class ConfigFile
     {
+        [DefaultValue(60)]
+        public uint Framerate;
+
         [DefaultValue(1000)]
         public int Slow;
 
@@ -55,7 +58,15 @@ namespace VM
 
         public static ConfigFile Load(string fileName)
         {
-            return JsonConvert.DeserializeObject<ConfigFile>(File.ReadAllText(fileName));
+            var res = JsonConvert.DeserializeObject<ConfigFile>(File.ReadAllText(fileName));
+
+            // convert speeds to instructions/frame
+            var fps = (int)res.Framerate;
+            res.Slow /= fps;
+            res.Medium /= fps;
+            res.Fast /= fps;
+
+            return res;
         }
     }
 }

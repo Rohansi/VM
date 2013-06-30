@@ -1,5 +1,4 @@
 ﻿using System;
-using System.Collections.Generic;
 
 namespace VM
 {
@@ -17,43 +16,7 @@ namespace VM
 
     class Instruction
     {
-        private static Dictionary<Instructions, int> operandCounts = new Dictionary<Instructions, int>()
-        {
-            { Instructions.Set,     2 },
-            { Instructions.Add,     2 },
-            { Instructions.Sub,     2 },
-            { Instructions.Mul,     2 },
-            { Instructions.Div,     2 },
-            { Instructions.Mod,     2 },
-            { Instructions.Inc,     1 },
-            { Instructions.Dec,     1 },
-
-            { Instructions.Not,     1 },
-            { Instructions.And,     2 },
-            { Instructions.Or,      2 },
-            { Instructions.Xor,     2 },
-            { Instructions.Shl,     2 },
-            { Instructions.Shr,     2 },
-
-            { Instructions.Push,    1 },
-            { Instructions.Pop,     1 },
-
-            { Instructions.Jmp,     1 },
-            { Instructions.Call,    1 },
-            { Instructions.Ret,     0 },
-
-            { Instructions.In,      2 },
-            { Instructions.Out,     2 },
-
-            { Instructions.Cmp,     2 },
-            { Instructions.Jz,      1 },
-            { Instructions.Jnz,     1 },
-            { Instructions.Je,      1 },
-            { Instructions.Ja,      1 },
-            { Instructions.Jb,      1 },
-            { Instructions.Jae,     1 },
-            { Instructions.Jbe,     1 },
-        };
+        private static int[] operandCounts;
 
         public readonly Instructions Type;
         public readonly Operand Left;
@@ -71,7 +34,7 @@ namespace VM
                 throw new VmException(string.Format("Bad opcode at {0}", machine.IP - 1));
 
             Type = (Instructions)id;
-            var operandCount = operandCounts[Type];
+            var operandCount = operandCounts[id];
 
             if (operandCount == 0)
                 return;
@@ -119,6 +82,46 @@ namespace VM
             if (Right != null)
                 res += ", " + Right;
             return res;
+        }
+
+        static Instruction()
+        {
+            operandCounts = new int[(int)Instructions.Count];
+
+            operandCounts[(int)Instructions.Set] = 2;
+            operandCounts[(int)Instructions.Add] = 2;
+            operandCounts[(int)Instructions.Sub] = 2;
+            operandCounts[(int)Instructions.Mul] = 2;
+            operandCounts[(int)Instructions.Div] = 2;
+            operandCounts[(int)Instructions.Mod] = 2;
+            operandCounts[(int)Instructions.Inc] = 1;
+            operandCounts[(int)Instructions.Dec] = 1;
+
+            operandCounts[(int)Instructions.Not] = 1;
+            operandCounts[(int)Instructions.And] = 2;
+            operandCounts[(int)Instructions.Or] = 2;
+            operandCounts[(int)Instructions.Xor] = 2;
+            operandCounts[(int)Instructions.Shl] = 2;
+            operandCounts[(int)Instructions.Shr] = 2;
+
+            operandCounts[(int)Instructions.Push] = 1;
+            operandCounts[(int)Instructions.Pop] = 1;
+
+            operandCounts[(int)Instructions.Jmp] = 1;
+            operandCounts[(int)Instructions.Call] = 1;
+            operandCounts[(int)Instructions.Ret] = 0;
+
+            operandCounts[(int)Instructions.In] = 2;
+            operandCounts[(int)Instructions.Out] = 2;
+
+            operandCounts[(int)Instructions.Cmp] = 2;
+            operandCounts[(int)Instructions.Jz] = 1;
+            operandCounts[(int)Instructions.Jnz] = 1;
+            operandCounts[(int)Instructions.Je] = 1;
+            operandCounts[(int)Instructions.Ja] = 1;
+            operandCounts[(int)Instructions.Jb] = 1;
+            operandCounts[(int)Instructions.Jae] = 1;
+            operandCounts[(int)Instructions.Jbe] = 1;
         }
     }
 }

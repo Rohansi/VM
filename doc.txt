@@ -1,7 +1,7 @@
 Virtual Machine
 --------------------
 vmConfig.json contains settings for the VM:
-	Slow			Speed. Measured in maximum instructions per frame
+	Slow			Speed. Measured in maximum instructions per second
 	Medium			..
 	Fast			..
 	DefaultFile		File to load when arguments are not provided

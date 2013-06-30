@@ -1,7 +1,9 @@
 ﻿{
-    "Slow": 1000,
-    "Medium": 5000,
-    "Fast": 10000,
+    "Framerate": 60,
+
+    "Slow": 10000,
+    "Medium": 100000,
+    "Fast": 500000,
 
     "DefaultFile": "out.bin",
 
