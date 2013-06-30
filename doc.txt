@@ -1,0 +1,126 @@
+Virtual Machine
+--------------------
+vmConfig.json contains settings for the VM:
+	Slow			Speed. Measured in maximum instructions per frame
+	Medium			..
+	Fast			..
+	DefaultFile		File to load when arguments are not provided
+	
+	Pause			Key to pause the VM
+	ChangeSpeed		Key to change VM target speed (shown in the status bar)
+	Reload			Key to reset and reload the VM
+	
+	Controller		Controller plugged in or not (bool of course)
+	ControllerUp	Key bindings
+	ControllerDown	..
+	ControllerLeft	..
+	ControllerRight	..
+	ControllerA		..
+	ControllerB		..
+	ControllerC		..
+	
+Possible keys can be found here:
+	http://sfml-dev.org/documentation/2.0/classsf_1_1Keyboard.php#acb4cacd7cc5802dec45724cf3314a142
+
+Display
+--------------------
+200x80 character display
+2 bytes per character, first is ASCII second is color
+32000 bytes of RAM
+
+Registers
+--------------------
+R0-RF	16 general purpose registers
+IP		Instruction pointer
+SP		Stack pointer
+
+All values are 16bit signed, little endian
+
+Instructions
+--------------------
+00	SET		DST, SRC	Set
+01	ADD		DST, SRC	Add
+02	SUB		DST, SRC	Subtract
+03	MUL		DST, SRC	Multiply
+04	DIV		DST, SRC	Divide
+05	MOD		DST, SRC	Modulo
+06	INC		DST			Increment
+07	DEC		DST			Decrement
+08	NOT		DST			Bitwise not
+09	AND		DST, SRC	Bitwise and
+0A	OR		DST, SRC	Bitwise or
+0B	XOR		DST, SRC	Bitwise xor
+0C	SHL		DST, SRC	Bit shift left
+0D	SHR		DST, SRC	Bit shift right
+0E	PUSH 	SRC			Pushes a value to the stack
+0F	POP		DST			Pops a value from the stack
+10	JMP		DST			Goto~
+11	CALL	DST			Call a subroutine
+12	RET					Return from a subroutine
+13	IN		DST, SRC	Read data from port
+14	OUT		DST, SRC	Write data to port
+15	CMP		DST, SRC	Compares two values, zero is only checked on DST
+16	JZ		DST			Jump if zero
+17	JNZ		DST			Jump if not zero
+18	JE		DST			Jump if equal
+19	JA		DST			Jump if above
+1A	JB		DST			Jump if below
+1B	JAE		DST			Jump if above or equal
+1C	JBE		DST			Jump if below or equal
+
+All math instructions (including bitwise) change the zero flag based on the result (which will be stored in DST).
+
+Operands
+--------------------
+Operands (DST, SRC) can be one the following values:
+	- Register (R0 through RF, SP or IP)
+	- Immediate (decimal, hexadecimal is not supported yet)
+	- or any of the above surrounded by square brackets making them pointers.
+
+Controller
+--------------------
+Currently the only device. Uses port 100.
+
+Read from this port to get controller status:
+	00000000 PCBARLDU
+	
+	P	Presence, if not set this device is not available
+	U	Up arrow
+	D	Down arrow
+	L	Left arrow
+	R	Right arrow
+	A	A button
+	B	S button
+	C	D button
+	
+Writing to this device currently does nothing.
+
+Flags register
+--------------------
+The internal flags register has a flag for each condition:
+	0000BAEZ
+	
+	Z	Zero
+	E	Equal
+	A	Above
+	B	Below
+
+Bytecode
+--------------------
+Instructions are assembled into the following format:
+	AAAAAEBB BBBCCCCC <Payload>
+	AAAAAEPP BBBBBBBB CCCCCCCC <Payload>
+	
+	A	5-bit instruction identifier (see first column in instructions)
+	B	First (left) operand
+	C	Second (right) operand
+	E	Toggle for the extended instruction format (3 bytes instead of 2)
+	P	Toggle for operand pointers, only in extended
+	
+Operands can have the following types:
+	
+  0-0F	Register
+	10	IP
+	11	SP
+	12	Immediate (stored in payload, left first)
+	

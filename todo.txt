@@ -1,0 +1,2 @@
+Add short immediate values for constants
+Look for obvious optimizations
