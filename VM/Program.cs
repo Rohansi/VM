@@ -50,6 +50,8 @@ namespace VM
 			memory = new MemoryWrapper(display);
 			machine = new VirtualMachine(memory);
 
+            machine.Devices.Add(new Timer(10));
+
 			if (Config.Controller)
 			{
 				controller = new Controller(window);
