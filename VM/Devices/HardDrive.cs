@@ -3,202 +3,213 @@ using System.IO;
 
 namespace VM
 {
-	class HardDrive : IDevice
-	{
-		public const int BytesPerSector = 512;
-		public const int Port = 200;
-		public const ushort Version = 1;
+    class HardDrive : IDevice
+    {
+        public const int BytesPerSector = 512;
+        public const int Port = 200;
+        public const ushort Version = 1;
 
-		enum DeviceState : short
-		{
-			None,
-			Identify,
-			Read,
-			Write,
-			Error
-		}
+        enum DeviceState : short
+        {
+            None,
+            Identify,
+            Read,
+            Write,
+            Error
+        }
 
-		enum ErrorCode : short
-		{
-			BadSector
-		}
+        enum ErrorCode : short
+        {
+            BadSector
+        }
 
-		private readonly VirtualMachine vm;
-		private readonly FileStream diskImage;
-		private ushort[] packet;
-		private int packetOffset;
+        private readonly VirtualMachine vm;
+        private readonly FileStream diskImage;
+        private ushort[] packet;
+        private int packetOffset;
 
-		private DeviceState state;
-		private readonly ushort sectorCount;
-		private ErrorCode errorCode;
+        private DeviceState state;
+        private readonly ushort sectorCount;
+        private ErrorCode errorCode;
 
-		public HardDrive(VirtualMachine vm, string filename)
-		{
-			this.vm = vm;
-			state = DeviceState.None;
+        public HardDrive(VirtualMachine vm, string fileName)
+        {
+            this.vm = vm;
+            state = DeviceState.None;
 
-			try
-			{
-				diskImage = new FileStream(filename, FileMode.Open);
-				sectorCount = (ushort)(new FileInfo(filename).Length / BytesPerSector);
-			}
-			catch (Exception e)
-			{
-				throw new VmException(String.Format("HardDrive: Cannot open file \"{0}\".", filename), e);
-			}
-		}
+            try
+            {
+                diskImage = new FileStream(fileName, FileMode.Open);
+                sectorCount = (ushort)(new FileInfo(fileName).Length / BytesPerSector);
+            }
+            catch (Exception e)
+            {
+                throw new VmException(String.Format("HardDrive: Cannot open file \"{0}\".", fileName), e);
+            }
+        }
 
-		public void DataReceived(short port, short data)
-		{
-			if (port != Port)
-				return;
+        public void Reset()
+        {
+            state = DeviceState.None;
+            packetOffset = 0;
+        }
 
-			switch (state)
-			{
-				case DeviceState.Read:
-					ReadDevice((ushort)data);
-					break;
+        public void DataReceived(short port, short data)
+        {
+            if (port != Port)
+                return;
 
-				case DeviceState.Write:
-					WriteDevice((ushort)data);
-					break;
+            switch (state)
+            {
+                case DeviceState.Read:
+                    ReadDevice((ushort)data);
+                    break;
 
-				default:
-					state = (DeviceState)data;
-					packetOffset = 0;
-					packet = null;
-					break;
-			}
-		}
+                case DeviceState.Write:
+                    WriteDevice((ushort)data);
+                    break;
 
-		public short? DataRequested(short port)
-		{
-			if (port != Port || state == DeviceState.None)
-				return null;
+                default:
+                    state = (DeviceState)data;
+                    packetOffset = 0;
+                    packet = null;
+                    break;
+            }
+        }
 
-			switch (state)
-			{
-				case DeviceState.Identify:
-					return IdentifyDevice();
+        public short? DataRequested(short port)
+        {
+            if (port != Port || state == DeviceState.None)
+                return null;
 
-				case DeviceState.Error:
-					state = DeviceState.None;
-					return (short)errorCode;
-			}
+            switch (state)
+            {
+                case DeviceState.Identify:
+                    return IdentifyDevice();
 
-			return null;
-		}
+                case DeviceState.Error:
+                    state = DeviceState.None;
+                    return (short)errorCode;
+            }
 
-		private short? IdentifyDevice()
-		{
-			const int packetSize = 4;
+            return null;
+        }
 
-			/*
-			 *	Identify Packet
-			 *		WORD			DESCRIPTION
-			 *		0000h			Status Word
-			 *		0000h			Disk size in sectors
-			 *		0001h			Size of sector in bytes
-			 *		0002h			Device index
-			 *		
-			 *	Status Word
-			 *		HI BYTE			Version
-			 *		LO BYTE			Bit 7		Signifies device present
-			 *						Bit 0:6		Reserved (Flags in the future?)
-			 */
+        private short? IdentifyDevice()
+        {
+            const int packetSize = 4;
 
-			if (packet == null)
-			{
-				packet = new ushort[packetSize];
-				packet[0] = (Version << 8) | 0x80;
-				packet[1] = sectorCount;
-				packet[2] = BytesPerSector;
-				packet[3] = 0;
+            /*
+             *	Identify Packet
+             *		WORD			DESCRIPTION
+             *		0000h			Status Word
+             *		0000h			Disk size in sectors
+             *		0001h			Size of sector in bytes
+             *		0002h			Device index
+             *		
+             *	Status Word
+             *		HI BYTE			Version
+             *		LO BYTE			Bit 7		Signifies device present
+             *						Bit 0:6		Reserved (Flags in the future?)
+             */
 
-				packetOffset = 0;
-			}
+            if (packet == null)
+            {
+                packet = new ushort[packetSize];
+                packet[0] = (Version << 8) | 0x80;
+                packet[1] = sectorCount;
+                packet[2] = BytesPerSector;
+                packet[3] = 0;
 
-			if (packetOffset > packetSize)
-				return null;
+                packetOffset = 0;
+            }
 
-			return (short?)packet[packetOffset++];
-		}
+            if (packetOffset > packetSize)
+                return null;
 
-		private void ReadDevice(ushort data)
-		{
-			const int packetSize = 2;
+            return (short?)packet[packetOffset++];
+        }
 
-			/*
-			 *	Read Packet
-			 *		WORD			DESCRIPTION
-			 *		0000h			Address
-			 *		0001h			LBA
-			 */
+        private void ReadDevice(ushort data)
+        {
+            const int packetSize = 2;
 
-			if (packet == null)
-				packet = new ushort[packetSize];
+            /*
+             *	Read Packet
+             *		WORD			DESCRIPTION
+             *		0000h			Address
+             *		0001h			LBA
+             */
 
-			packet[packetOffset++] = data;
+            if (packet == null)
+                packet = new ushort[packetSize];
 
-			if (packetOffset >= packetSize)
-			{
-				ushort address = packet[0];
-				ushort sector = packet[1];
+            packet[packetOffset++] = data;
 
-				if (sector >= sectorCount)
-				{
-					errorCode = ErrorCode.BadSector;
-					state = DeviceState.Error;
-					return;
-				}
+            if (packetOffset >= packetSize)
+            {
+                var address = packet[0];
+                var sector = packet[1];
 
-				byte[] buffer = new byte[BytesPerSector];
-				diskImage.Seek(sector * BytesPerSector, SeekOrigin.Begin);
-				diskImage.Read(buffer, 0, BytesPerSector);
-				for (int i = 0; i < buffer.Length; ++i)
-					vm.Memory[address + i] = buffer[i];
+                if (sector >= sectorCount)
+                {
+                    errorCode = ErrorCode.BadSector;
+                    state = DeviceState.Error;
+                    return;
+                }
 
-				state = DeviceState.None;
-			}
-		}
+                var buffer = new byte[BytesPerSector];
+                diskImage.Seek(sector * BytesPerSector, SeekOrigin.Begin);
+                diskImage.Read(buffer, 0, BytesPerSector);
 
-		private void WriteDevice(ushort data)
-		{
-			const int packetSize = 2;
+                for (var i = 0; i < buffer.Length; i++)
+                {
+                    vm.Memory[address + i] = buffer[i];
+                }
 
-			/*
-			 *	Read Packet
-			 *		WORD			DESCRIPTION
-			 *		0000h			Address
-			 *		0001h			LBA
-			 */
+                state = DeviceState.None;
+            }
+        }
 
-			if (packet == null)
-				packet = new ushort[packetSize];
+        private void WriteDevice(ushort data)
+        {
+            const int packetSize = 2;
 
-			packet[packetOffset++] = data;
+            /*
+             *	Read Packet
+             *		WORD			DESCRIPTION
+             *		0000h			Address
+             *		0001h			LBA
+             */
 
-			if (packetOffset >= packetSize)
-			{
-				ushort address = packet[0];
-				ushort sector = packet[1];
+            if (packet == null)
+                packet = new ushort[packetSize];
 
-				if (sector >= sectorCount)
-				{
-					errorCode = ErrorCode.BadSector;
-					state = DeviceState.Error;
-					return;
-				}
+            packet[packetOffset++] = data;
 
-				byte[] buffer = new byte[BytesPerSector];
-				for (int i = 0; i < buffer.Length; ++i)
-					buffer[i] = vm.Memory[address + i];
+            if (packetOffset >= packetSize)
+            {
+                var address = packet[0];
+                var sector = packet[1];
 
-				diskImage.Seek(sector * BytesPerSector, SeekOrigin.Begin);
-				diskImage.Write(buffer, 0, BytesPerSector);
+                if (sector >= sectorCount)
+                {
+                    errorCode = ErrorCode.BadSector;
+                    state = DeviceState.Error;
+                    return;
+                }
 
-				state = DeviceState.None;
-			}
-		}
-	}
+                var buffer = new byte[BytesPerSector];
+                for (var i = 0; i < buffer.Length; i++)
+                {
+                    buffer[i] = vm.Memory[address + i];
+                }
+
+                diskImage.Seek(sector * BytesPerSector, SeekOrigin.Begin);
+                diskImage.Write(buffer, 0, BytesPerSector);
+
+                state = DeviceState.None;
+            }
+        }
+    }
 }

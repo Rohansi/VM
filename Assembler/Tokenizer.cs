@@ -204,13 +204,11 @@ namespace Assembler
 
                         if (pos < source.Length && value == "0" && source[pos] == 'x' && !negative)
                         {
-                            const string hexadecimalDigits = "0123456789abcdefABCDEF";
-
                             pos++;
                             value = "";
                             hex = true;
 
-                            while (pos < source.Length && hexadecimalDigits.Contains(source[pos]))
+                            while (pos < source.Length && char.IsLetterOrDigit(source[pos]))
                             {
                                 value += source[pos++];
                             }

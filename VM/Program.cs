@@ -176,6 +176,8 @@ namespace VM
 
 				if (error != null)
 					statusString = string.Format("ERROR: {0}", error);
+                else if (machine.Flags.HasFlag(VirtualMachine.Flag.Trap))
+                    statusString = "Trapped";
 				else if (running)
 					statusString = string.Format("Running: {0} instructions per second ({1})", previousSteps.Sum(), speed);
 

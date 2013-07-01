@@ -175,6 +175,7 @@ namespace Assembler
             { Instructions.Jb,      1 },
             { Instructions.Jae,     1 },
             { Instructions.Jbe,     1 },
+            { Instructions.Jne,     1 },
         };
         #endregion
 

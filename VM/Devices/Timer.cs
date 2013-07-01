@@ -16,6 +16,11 @@ namespace VM
             watch = new Stopwatch();
         }
 
+        public void Reset()
+        {
+            target = 0;
+        }
+
         public void DataReceived(short port, short data)
         {
             if (port != timerPort)

@@ -94,6 +94,7 @@ namespace Assembler
                             case "jb":
                             case "jae":
                             case "jbe":
+                            case "jne":
                                 tokens.Add(new Token(TokenType.Keyword, tok.Value.ToLower(), tok.Line));
                                 break;
                             default:

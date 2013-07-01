@@ -55,7 +55,12 @@ namespace VM
                 }
             };
         }
-        
+
+        public void Reset()
+        {
+            
+        }
+
         public void DataReceived(short port, short data)
         {
             

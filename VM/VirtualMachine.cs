@@ -9,10 +9,14 @@ namespace VM
         public enum Flag
         {
             None = 0,
+            CmpReset = 255, // cmp resets lower 8 bits
+
             Zero = 1 << 0,
             Equal = 1 << 1,
             Above = 1 << 2,
-            Below = 1 << 3
+            Below = 1 << 3,
+
+            Trap = 1 << 15
         }
 
         public readonly short[] Registers;
@@ -26,10 +30,6 @@ namespace VM
         public VirtualMachine(IMemory memory)
         {
             Registers = new short[16];
-            IP = 0;
-            SP = 31999;
-            Flags = Flag.None;
-
             Memory = memory;
             Devices = new List<IDevice>();
         }
@@ -43,16 +43,24 @@ namespace VM
 
             IP = 0;
             SP = 31999;
-            Flags = Flag.None;
+            Flags = Flag.Trap;
 
             for (var i = 0; i < 32000; i++)
             {
                 Memory[i] = 0;
             }
+
+            foreach (var dev in Devices)
+            {
+                dev.Reset();
+            }
         }
 
-        public void Step()
+        public void Step(bool overrideTrap = false)
         {
+            if (Flags.HasFlag(Flag.Trap) && !overrideTrap)
+                return;
+
             var instruction = new Instruction(this);
             short result = 0;
 
@@ -80,12 +88,20 @@ namespace VM
                     SetZero(result);
                     break;
                 case Instructions.Div:
-                    result = (short)(instruction.Left.Get() / instruction.Right.Get());
+                    var divisor = instruction.Right.Get();
+                    if (divisor == 0)
+                        throw new VmException("Divide by zero");
+
+                    result = (short)(instruction.Left.Get() / divisor);
                     instruction.Left.Set(result);
                     SetZero(result);
                     break;
                 case Instructions.Mod:
-                    result = (short)(instruction.Left.Get() % instruction.Right.Get());
+                    var modDivisor = instruction.Right.Get();
+                    if (modDivisor == 0)
+                        throw new VmException("Divide by zero");
+
+                    result = (short)(instruction.Left.Get() % modDivisor);
                     instruction.Left.Set(result);
                     SetZero(result);
                     break;
@@ -182,7 +198,7 @@ namespace VM
                     var cmpValL = instruction.Left.Get();
                     var cmpValR = instruction.Right.Get();
 
-                    Flags = Flag.None;
+                    Flags &= ~Flag.CmpReset;
 
                     if (cmpValL == 0)
                         Flags |= Flag.Zero; // can be used as a shorter zero check, no payload needed
@@ -221,6 +237,10 @@ namespace VM
                     break;
                 case Instructions.Jbe:
                     if (Flags.HasFlag(Flag.Below) || Flags.HasFlag(Flag.Equal))
+                        IP = instruction.Left.Get();
+                    break;
+                case Instructions.Jne:
+                    if (!Flags.HasFlag(Flag.Equal))
                         IP = instruction.Left.Get();
                     break;
             }

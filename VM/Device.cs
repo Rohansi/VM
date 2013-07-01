@@ -7,6 +7,7 @@ namespace VM
 {
     public interface IDevice
     {
+        void Reset();
         void DataReceived(short port, short data);
         short? DataRequested(short port);
     }

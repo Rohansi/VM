@@ -12,7 +12,7 @@ namespace Assembler
         Push, Pop,
         Jmp, Call, Ret,
         In, Out,
-        Cmp, Jz, Jnz, Je, Ja, Jb, Jae, Jbe,
+        Cmp, Jz, Jnz, Je, Ja, Jb, Jae, Jbe, Jne,
 
         Db, None
     }
@@ -87,26 +87,26 @@ namespace Assembler
 
     class DataInstruction : Instruction
     {
-        private List<byte> _bytes = new List<byte>();
+        private List<byte> bytes = new List<byte>();
 
         public bool HasData
         {
-            get { return _bytes.Count > 0; }
+            get { return bytes.Count > 0; }
         }
          
         public void Add(byte value)
         {
-            _bytes.Add(value);
+            bytes.Add(value);
         }
 
         public void Add(string value)
         {
-            _bytes.AddRange(Encoding.GetEncoding(437).GetBytes(value));
+            bytes.AddRange(Encoding.GetEncoding(437).GetBytes(value));
         }
 
         public override byte[] Assemble()
         {
-            return _bytes.ToArray();
+            return bytes.ToArray();
         }
     }
 }
