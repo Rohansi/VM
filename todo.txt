@@ -1,2 +1,3 @@
 Add short immediate values for constants
+Clean up VM Program.cs
 Look for obvious optimizations

@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
 using System.Linq;
+using System.Reflection;
 using SFML.Graphics;
 using SFML.Window;
 using Texter;
@@ -27,18 +28,16 @@ namespace VM
 		static TextDisplay display;
 		static VirtualMachine machine;
 		static IMemory memory;
-		static Controller controller;
 		static string error;
 
 		static void Main(string[] args)
 		{
-			var speed = VmSpeed.Slow;
+            AppDomain.CurrentDomain.UnhandledException += (sender, e) => DumpError((Exception)e.ExceptionObject);
+
+			var speed = VmSpeed.Medium;
 			var running = true;
 
-			AppDomain.CurrentDomain.UnhandledException += (sender, e) =>
-				File.WriteAllText("vmError.txt", e.ExceptionObject.ToString());
-
-			Config = ConfigFile.Load("vmConfig.json");
+			Config = ConfigFile.Load("VmConfig.xml");
 
 			TextDisplay.Initialize(CharWidth, CharHeight);
 
@@ -50,35 +49,30 @@ namespace VM
 			memory = new MemoryWrapper(display);
 			machine = new VirtualMachine(memory);
 
+            // TODO: add system devices
             machine.Devices.Add(new Timer(10));
 
-			if (Config.Controller)
-			{
-				controller = new Controller(window);
+            var devMap = new Dictionary<string, Type>()
+            {
+                { "Controller", typeof(Controller) },
+                { "HardDrive", typeof(HardDrive) }
+            };
 
-				controller.KeyBindings[ControllerKeys.Up] = Config.ControllerUp;
-				controller.KeyBindings[ControllerKeys.Down] = Config.ControllerDown;
-				controller.KeyBindings[ControllerKeys.Left] = Config.ControllerLeft;
-				controller.KeyBindings[ControllerKeys.Right] = Config.ControllerRight;
-				controller.KeyBindings[ControllerKeys.A] = Config.ControllerA;
-				controller.KeyBindings[ControllerKeys.B] = Config.ControllerB;
-				controller.KeyBindings[ControllerKeys.C] = Config.ControllerC;
+            foreach (var devConfig in Config.Devices)
+            {
+                var devName = devConfig.Name.ToString();
+                if (!devMap.ContainsKey(devName))
+                    continue;
 
-				machine.Devices.Add(controller);
-			}
+                var devEnabledAttr = devConfig.Attribute("Enabled");
+                var devEnabled = devEnabledAttr == null || devEnabledAttr.Value.ToLower() == "true";
 
-			if (!String.IsNullOrEmpty(Config.HardDriveImage))
-			{
-				try
-				{
-					machine.Devices.Add(new HardDrive(machine, Config.HardDriveImage));
-				}
-				catch (VmException e)
-				{
-					running = false;
-					error = e.Message;
-				}
-			}
+                if (!devEnabled)
+                    continue;
+
+                var device = (Device)Activator.CreateInstance(devMap[devName], window, machine, devConfig);
+                machine.Devices.Add(device);
+            }
 
 			var file = Config.DefaultFile;
 			if (args.Length > 0)
@@ -208,5 +202,16 @@ namespace VM
 				error = string.Format("Failed to load {0}", fileName);
 			}
 		}
+
+        static void DumpError(Exception e)
+        {
+            // hope this works
+            while (e is TypeInitializationException || e is TargetInvocationException)
+            {
+                e = e.InnerException; 
+            }
+
+            File.WriteAllText("VmError.txt", e.ToString());
+        }
 	}
 }

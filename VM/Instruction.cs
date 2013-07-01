@@ -2,7 +2,7 @@
 
 namespace VM
 {
-    public enum Instructions
+    enum Instructions
     {
         Set, Add, Sub, Mul, Div, Mod, Inc, Dec,
         Not, And, Or, Xor, Shl, Shr,

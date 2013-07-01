@@ -1,0 +1,34 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<VmConfig>
+    <Framerate>60</Framerate>
+
+    <Slow>10000</Slow>
+    <Medium>100000</Medium>
+    <Fast>500000</Fast>
+
+    <DefaultFile>out.bin</DefaultFile>
+
+    <Pause>F1</Pause>
+    <ChangeSpeed>F2</ChangeSpeed>
+    <Reload>F3</Reload>
+
+    <Devices>
+        <Controller Enabled="true">
+            <Port>100</Port>
+
+            <Up>Up</Up>
+            <Down>Down</Down>
+            <Left>Left</Left>
+            <Right>Right</Right>
+            <A>A</A>
+            <B>S</B>
+            <C>D</C>
+        </Controller>
+
+        <HardDrive Enabled="true">
+            <Port>200</Port>
+            <FileName>output.bin</FileName>
+        </HardDrive>
+    </Devices>
+</VmConfig>
+

@@ -3,7 +3,7 @@ using System.Diagnostics;
 
 namespace VM
 {
-    class Timer : IDevice
+    class Timer : Device
     {
         private short timerPort;
         private Stopwatch watch;
@@ -16,12 +16,12 @@ namespace VM
             watch = new Stopwatch();
         }
 
-        public void Reset()
+        public override void Reset()
         {
             target = 0;
         }
 
-        public void DataReceived(short port, short data)
+        public override void DataReceived(short port, short data)
         {
             if (port != timerPort)
                 return;
@@ -30,7 +30,7 @@ namespace VM
             target = Math.Abs(data);
         }
 
-        public short? DataRequested(short port)
+        public override short? DataRequested(short port)
         {
             if (port != timerPort)
                 return null;

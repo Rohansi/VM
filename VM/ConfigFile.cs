@@ -1,75 +1,83 @@
 ﻿using System;
-using System.ComponentModel;
+using System.Collections.Generic;
 using System.IO;
-using Newtonsoft.Json;
+using System.Xml;
+using System.Xml.Linq;
 using SFML.Window;
 
 namespace VM
 {
-    public class ConfigFile
+    class ConfigFile
     {
-        [DefaultValue(60)]
         public uint Framerate;
-
-        [DefaultValue(1000)]
         public int Slow;
-
-        [DefaultValue(5000)]
         public int Medium;
-
-        [DefaultValue(10000)]
         public int Fast;
-
-        [DefaultValue("out.bin")]
         public string DefaultFile;
-
-        [DefaultValue(Keyboard.Key.F1)]
         public Keyboard.Key Pause;
-
-        [DefaultValue(Keyboard.Key.F2)]
         public Keyboard.Key ChangeSpeed;
-
-        [DefaultValue(Keyboard.Key.F3)]
         public Keyboard.Key Reload;
 
-        [DefaultValue(true)]
-        public bool Controller;
-
-        [DefaultValue(Keyboard.Key.Up)]
-        public Keyboard.Key ControllerUp;
-
-        [DefaultValue(Keyboard.Key.Down)]
-        public Keyboard.Key ControllerDown;
-
-        [DefaultValue(Keyboard.Key.Left)]
-        public Keyboard.Key ControllerLeft;
-
-        [DefaultValue(Keyboard.Key.Right)]
-        public Keyboard.Key ControllerRight;
-
-        [DefaultValue(Keyboard.Key.A)]
-        public Keyboard.Key ControllerA;
-
-        [DefaultValue(Keyboard.Key.S)]
-        public Keyboard.Key ControllerB;
-
-        [DefaultValue(Keyboard.Key.D)]
-        public Keyboard.Key ControllerC;
-
-		[DefaultValue("")]
-	    public string HardDriveImage;
+        public List<XElement> Devices;
 
         public static ConfigFile Load(string fileName)
         {
-            var res = JsonConvert.DeserializeObject<ConfigFile>(File.ReadAllText(fileName));
+            // has to be a better way to do this but for now its fine
+            var errorMsg = "XML";
 
-            // convert speeds to instructions/frame
-            var fps = (int)res.Framerate;
-            res.Slow /= fps;
-            res.Medium /= fps;
-            res.Fast /= fps;
+            try
+            {
+                var doc = XDocument.Load(fileName).Root;
+                var res = new ConfigFile();
 
-            return res;
+                if (doc == null)
+                    throw new Exception("why is root null?");
+
+                errorMsg = "Framerate";
+                res.Framerate = uint.Parse(Util.ElementValue(doc, "Framerate", "60"));
+
+                if (res.Framerate == 0)
+                    throw new Exception("Framerate cannot be 0");
+
+                errorMsg = "Slow";
+                res.Slow = int.Parse(Util.ElementValue(doc, "Slow", "60"));
+
+                errorMsg = "Medium";
+                res.Medium = int.Parse(Util.ElementValue(doc, "Medium", "60"));
+
+                errorMsg = "Fast";
+                res.Fast = int.Parse(Util.ElementValue(doc, "Fast", "60"));
+
+                errorMsg = "DefaultFile";
+                res.DefaultFile = Util.ElementValue(doc, "DefaultFile", "out.bin");
+
+                errorMsg = "Pause";
+                res.Pause = Util.EnumParse<Keyboard.Key>(Util.ElementValue(doc, "Pause", "F1"));
+
+                errorMsg = "ChangeSpeed";
+                res.ChangeSpeed = Util.EnumParse<Keyboard.Key>(Util.ElementValue(doc, "ChangeSpeed", "F2"));
+
+                errorMsg = "Reload";
+                res.Reload = Util.EnumParse<Keyboard.Key>(Util.ElementValue(doc, "Reload", "F3"));
+
+                // convert speeds to instructions/frame
+                var fps = (int)res.Framerate;
+                res.Slow /= fps;
+                res.Medium /= fps;
+                res.Fast /= fps;
+
+                errorMsg = "Devices";
+                res.Devices = new List<XElement>();
+                var devices = doc.Element("Devices");
+                if (devices != null)
+                    res.Devices.AddRange(devices.Elements());
+
+                return res;
+            }
+            catch (Exception e)
+            {
+                throw new Exception(string.Format("Could not read config: {0}", errorMsg), e);
+            }
         }
     }
 }

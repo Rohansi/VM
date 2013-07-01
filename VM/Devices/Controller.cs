@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Xml.Linq;
 using SFML.Graphics;
 using SFML.Window;
 
@@ -19,17 +20,38 @@ namespace VM
         Presence = 1 << 7 // presence of the device
     }
 
-    class Controller : IDevice
+    class Controller : Device
     {
+        private short devPort;
         private ControllerKeys state;
         
         public Dictionary<ControllerKeys, Keyboard.Key> KeyBindings; 
 
-        public Controller(RenderWindow window)
+        public Controller(RenderWindow window, VirtualMachine virtualMachine, XElement config)
         {
+            state = ControllerKeys.Presence;
             KeyBindings = new Dictionary<ControllerKeys, Keyboard.Key>();
 
-            state = ControllerKeys.Presence;
+            var errorMsg = "";
+
+            try
+            {
+                errorMsg = "Bad Port";
+                devPort = short.Parse(Util.ElementValue(config, "Port", null));
+
+                errorMsg = "Bad Key";
+                KeyBindings[ControllerKeys.Up] = Util.EnumParse<Keyboard.Key>(Util.ElementValue(config, "Up", "Up"));
+                KeyBindings[ControllerKeys.Down] = Util.EnumParse<Keyboard.Key>(Util.ElementValue(config, "Down", "Down"));
+                KeyBindings[ControllerKeys.Left] = Util.EnumParse<Keyboard.Key>(Util.ElementValue(config, "Left", "Left"));
+                KeyBindings[ControllerKeys.Right] = Util.EnumParse<Keyboard.Key>(Util.ElementValue(config, "Right", "Right"));
+                KeyBindings[ControllerKeys.A] = Util.EnumParse<Keyboard.Key>(Util.ElementValue(config, "A", "A"));
+                KeyBindings[ControllerKeys.B] = Util.EnumParse<Keyboard.Key>(Util.ElementValue(config, "B", "S"));
+                KeyBindings[ControllerKeys.C] = Util.EnumParse<Keyboard.Key>(Util.ElementValue(config, "C", "D"));
+            }
+            catch (Exception e)
+            {
+                throw new Exception(string.Format("Controller: {0}", errorMsg), e);
+            }
 
             window.KeyPressed += (sender, e) =>
             {
@@ -56,19 +78,19 @@ namespace VM
             };
         }
 
-        public void Reset()
+        public override void Reset()
+        {
+            state = ControllerKeys.Presence;
+        }
+
+        public override void DataReceived(short port, short data)
         {
             
         }
 
-        public void DataReceived(short port, short data)
+        public override short? DataRequested(short port)
         {
-            
-        }
-
-        public short? DataRequested(short port)
-        {
-            if (port != 100)
+            if (port != devPort)
                 return null;
 
             return (short)state;

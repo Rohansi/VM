@@ -1,14 +1,11 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
 
 namespace VM
 {
-    public interface IDevice
+    abstract class Device
     {
-        void Reset();
-        void DataReceived(short port, short data);
-        short? DataRequested(short port);
+        public abstract void Reset();
+        public abstract void DataReceived(short port, short data);
+        public abstract short? DataRequested(short port);
     }
 }

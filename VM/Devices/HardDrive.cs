@@ -1,12 +1,13 @@
 ﻿using System;
 using System.IO;
+using System.Xml.Linq;
+using SFML.Graphics;
 
 namespace VM
 {
-    class HardDrive : IDevice
+    class HardDrive : Device
     {
         public const int BytesPerSector = 512;
-        public const int Port = 200;
         public const ushort Version = 1;
 
         enum DeviceState : short
@@ -23,40 +24,53 @@ namespace VM
             BadSector
         }
 
-        private readonly VirtualMachine vm;
-        private readonly FileStream diskImage;
+        private VirtualMachine vm;
+        private FileStream diskImage;
+        private ushort sectorCount;
+        private short devPort;
+
         private ushort[] packet;
         private int packetOffset;
 
         private DeviceState state;
-        private readonly ushort sectorCount;
         private ErrorCode errorCode;
 
-        public HardDrive(VirtualMachine vm, string fileName)
+        public HardDrive(RenderWindow window, VirtualMachine virtualMachine, XElement config)
         {
-            this.vm = vm;
+            vm = virtualMachine;
             state = DeviceState.None;
+
+            var errorMsg = "";
 
             try
             {
+                errorMsg = "Bad Port";
+                devPort = short.Parse(Util.ElementValue(config, "Port", null));
+
+                errorMsg = "Bad FileName";
+                var fileName = Util.ElementValue(config, "FileName", null);
+                if (fileName == null)
+                    throw new Exception();
+
+                errorMsg = string.Format("Failed to open '{0}'", fileName);
                 diskImage = new FileStream(fileName, FileMode.Open);
                 sectorCount = (ushort)(new FileInfo(fileName).Length / BytesPerSector);
             }
             catch (Exception e)
             {
-                throw new VmException(String.Format("HardDrive: Cannot open file \"{0}\".", fileName), e);
+                throw new Exception(string.Format("HardDrive: {0}", errorMsg), e);
             }
         }
 
-        public void Reset()
+        public override void Reset()
         {
             state = DeviceState.None;
             packetOffset = 0;
         }
 
-        public void DataReceived(short port, short data)
+        public override void DataReceived(short port, short data)
         {
-            if (port != Port)
+            if (port != devPort)
                 return;
 
             switch (state)
@@ -77,9 +91,9 @@ namespace VM
             }
         }
 
-        public short? DataRequested(short port)
+        public override short? DataRequested(short port)
         {
-            if (port != Port || state == DeviceState.None)
+            if (port != devPort || state == DeviceState.None)
                 return null;
 
             switch (state)

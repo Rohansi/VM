@@ -25,13 +25,13 @@ namespace VM
         public Flag Flags;
 
         public readonly IMemory Memory;
-        public List<IDevice> Devices;
+        public List<Device> Devices;
 
         public VirtualMachine(IMemory memory)
         {
             Registers = new short[16];
             Memory = memory;
-            Devices = new List<IDevice>();
+            Devices = new List<Device>();
         }
 
         public void Reset()
