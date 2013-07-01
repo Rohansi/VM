@@ -99,8 +99,9 @@ namespace Assembler
                 {
                     instructions.Add(ParseInstruction());
                 }
-                else if (t.Type == TokenType.Word && t.Value.ToLower() == "db")
+                else if (t.Type == TokenType.Word && new List<string> { "db", "dw", "rb" }.Contains(t.Value.ToLower()))
                 {
+	                string type = t.Value;
                     var dataLine = t.Line;
                     t = tokens[++pos];
 
@@ -111,14 +112,31 @@ namespace Assembler
                         {
                             data.Add(t.Value);
                         }
-                        else
-                        {
-                            byte value;
-                            if (!byte.TryParse(t.Value, out value))
-                                throw new AssemblerException(string.Format("Value out of range (0-255) on line {0}.", t.Line));
+						else if (type == "db")
+						{
+							byte value;
+							if (!byte.TryParse(t.Value, out value))
+								throw new AssemblerException(string.Format("Value out of range (0-255) on line {0}.", t.Line));
 
-                            data.Add(value);
-                        }
+							data.Add(value);
+						}
+						else if (type == "dw")
+						{
+							short value;
+							if (!short.TryParse(t.Value, out value))
+								throw new AssemblerException(string.Format("Value out of range (0-65535) on line {0}.", t.Line));
+
+							data.Add(value);
+						}
+						else if (type == "rb")
+						{
+							int value;
+							if (!int.TryParse(t.Value, out value))
+								throw new AssemblerException(String.Format("Value out of range (0-4294967295) on line {0}.", t.Line));
+
+							while(value-- > 0)
+								data.Add(0);
+						}
 
                         pos++;
 

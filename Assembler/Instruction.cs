@@ -99,6 +99,11 @@ namespace Assembler
             bytes.Add(value);
         }
 
+		public void Add(short value)
+		{
+			bytes.AddRange(BitConverter.GetBytes(value));
+		}
+
         public void Add(string value)
         {
             bytes.AddRange(Encoding.GetEncoding(437).GetBytes(value));
