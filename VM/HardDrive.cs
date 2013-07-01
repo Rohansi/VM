@@ -14,7 +14,13 @@ namespace VM
 			None,
 			Identify,
 			Read,
-			Write
+			Write,
+			Error
+		}
+
+		enum ErrorCode : short
+		{
+			BadSector
 		}
 
 		private readonly VirtualMachine vm;
@@ -24,6 +30,7 @@ namespace VM
 
 		private DeviceState state;
 		private readonly ushort sectorCount;
+		private ErrorCode errorCode;
 
 		public HardDrive(VirtualMachine vm, string filename)
 		{
@@ -73,6 +80,10 @@ namespace VM
 			{
 				case DeviceState.Identify:
 					return IdentifyDevice();
+
+				case DeviceState.Error:
+					state = DeviceState.None;
+					return (short)errorCode;
 			}
 
 			return null;
@@ -134,9 +145,12 @@ namespace VM
 				ushort address = packet[0];
 				ushort sector = packet[1];
 
-				// TODO Error codes?
-				if (sector > sectorCount)
+				if (sector >= sectorCount)
+				{
+					errorCode = ErrorCode.BadSector;
+					state = DeviceState.Error;
 					return;
+				}
 
 				byte[] buffer = new byte[BytesPerSector];
 				diskImage.Seek(sector * BytesPerSector, SeekOrigin.Begin);
@@ -169,9 +183,12 @@ namespace VM
 				ushort address = packet[0];
 				ushort sector = packet[1];
 
-				// TODO Error codes?
-				if (sector > sectorCount)
+				if (sector >= sectorCount)
+				{
+					errorCode = ErrorCode.BadSector;
+					state = DeviceState.Error;
 					return;
+				}
 
 				byte[] buffer = new byte[BytesPerSector];
 				for (int i = 0; i < buffer.Length; ++i)
