@@ -19,4 +19,6 @@
     "ControllerA": "A",
     "ControllerB": "S",
     "ControllerC": "D",
+
+	"HardDriveImage" : "hd0.img"
 }

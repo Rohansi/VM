@@ -56,6 +56,9 @@ namespace VM
         [DefaultValue(Keyboard.Key.D)]
         public Keyboard.Key ControllerC;
 
+		[DefaultValue("")]
+	    public string HardDriveImage;
+
         public static ConfigFile Load(string fileName)
         {
             var res = JsonConvert.DeserializeObject<ConfigFile>(File.ReadAllText(fileName));
