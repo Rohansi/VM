@@ -43,7 +43,7 @@ namespace VM
 
             IP = 0;
             SP = 31999;
-            Flags = Flag.Trap;
+            Flags = Flag.None;
 
             for (var i = 0; i < 32000; i++)
             {

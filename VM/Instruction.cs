@@ -122,6 +122,7 @@ namespace VM
             operandCounts[(int)Instructions.Jb] = 1;
             operandCounts[(int)Instructions.Jae] = 1;
             operandCounts[(int)Instructions.Jbe] = 1;
+            operandCounts[(int)Instructions.Jne] = 1;
         }
     }
 }
