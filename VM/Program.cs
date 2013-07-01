@@ -32,6 +32,9 @@ namespace VM
 
 		static void Main(string[] args)
 		{
+			var speed = VmSpeed.Slow;
+			var running = true;
+
 			AppDomain.CurrentDomain.UnhandledException += (sender, e) =>
 				File.WriteAllText("vmError.txt", e.ExceptionObject.ToString());
 
@@ -62,16 +65,26 @@ namespace VM
 				machine.Devices.Add(controller);
 			}
 
-			machine.Devices.Add(new HardDrive(machine, "test.img"));
+			if (!String.IsNullOrEmpty(Config.HardDriveImage))
+			{
+				try
+				{
+					machine.Devices.Add(new HardDrive(machine, Config.HardDriveImage));
+				}
+				catch (VmException e)
+				{
+					running = false;
+					error = e.Message;
+				}
+			}
 
 			var file = Config.DefaultFile;
 			if (args.Length > 0)
 				file = args[0];
 
-			Load(file);
+			if (error == null)
+				Load(file);
 
-			var running = true;
-			var speed = VmSpeed.Slow;
 			window.KeyPressed += (sender, eventArgs) =>
 			{
 				if (eventArgs.Code == Config.Pause)

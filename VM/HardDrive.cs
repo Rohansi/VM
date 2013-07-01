@@ -44,7 +44,7 @@ namespace VM
 			}
 			catch (Exception e)
 			{
-				throw new VmException("Cannot initialize device HardDrive", e);
+				throw new VmException(String.Format("HardDrive: Cannot open file \"{0}\".", filename), e);
 			}
 		}
 
