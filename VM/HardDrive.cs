@@ -17,8 +17,8 @@ namespace VM
 			Write
 		}
 
-		private VirtualMachine vm;
-		private BinaryReader diskImage;
+		private readonly VirtualMachine vm;
+		private readonly FileStream diskImage;
 		private ushort[] packet;
 		private int packetOffset;
 
@@ -32,8 +32,8 @@ namespace VM
 
 			try
 			{
-				diskImage = new BinaryReader(new FileStream(filename, FileMode.Open));
-				sectorCount = (ushort)(new FileInfo(filename).Length / BytesPerSector + 1);
+				diskImage = new FileStream(filename, FileMode.Open);
+				sectorCount = (ushort)(new FileInfo(filename).Length / BytesPerSector);
 			}
 			catch (Exception e)
 			{
@@ -139,9 +139,12 @@ namespace VM
 					return;
 
 				byte[] buffer = new byte[BytesPerSector];
-				diskImage.Read(buffer, sector * BytesPerSector, BytesPerSector);
+				diskImage.Seek(sector * BytesPerSector, SeekOrigin.Begin);
+				diskImage.Read(buffer, 0, BytesPerSector);
 				for (int i = 0; i < buffer.Length; ++i)
 					vm.Memory[address + i] = buffer[i];
+
+				state = DeviceState.None;
 			}
 		}
 
@@ -156,6 +159,11 @@ namespace VM
 			 *		0001h			LBA
 			 */
 
+			if (packet == null)
+				packet = new ushort[packetSize];
+
+			packet[packetOffset++] = data;
+
 			if (packetOffset >= packetSize)
 			{
 				ushort address = packet[0];
@@ -165,13 +173,14 @@ namespace VM
 				if (sector > sectorCount)
 					return;
 
-			}
-			else
-			{
-				if (packet == null)
-					packet = new ushort[packetSize];
+				byte[] buffer = new byte[BytesPerSector];
+				for (int i = 0; i < buffer.Length; ++i)
+					buffer[i] = vm.Memory[address + i];
 
-				packet[packetOffset++] = data;
+				diskImage.Seek(sector * BytesPerSector, SeekOrigin.Begin);
+				diskImage.Write(buffer, 0, BytesPerSector);
+
+				state = DeviceState.None;
 			}
 		}
 	}
