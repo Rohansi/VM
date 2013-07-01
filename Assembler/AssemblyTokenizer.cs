@@ -6,7 +6,7 @@ namespace Assembler
     public enum TokenType
     {
         EndOfFile, Number, String,
-        Word, Keyword, Label, Comma, OpenBracket, CloseBracket
+        Word, Keyword, Label, Comma, OpenBracket, CloseBracket, Period
     }
 
     public struct Token
@@ -134,6 +134,12 @@ namespace Assembler
                                 break;
                             }
                         }
+
+						if (tok.Value == ".")
+						{
+							tokens.Add(new Token(TokenType.Period, tok.Value, tok.Line));
+							break;
+						}
 
                         throw new AssemblerException(string.Format("Unexpected delimiter '{0}'", tok.Value));
                     }

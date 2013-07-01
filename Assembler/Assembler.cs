@@ -47,6 +47,12 @@ namespace Assembler
                     throw new AssemblerException("Program exceeds 32000 bytes");
             }
 
+			foreach(Label label in labels.Values)
+			{
+				if (label.Address == 0 && label.Index >= instructions.Count)
+					label.Address = offset;
+			}
+
             var assembled = new List<byte>();
             foreach (var instruction in instructions)
             {
@@ -54,10 +60,11 @@ namespace Assembler
 
                 if (instruction.Left != null && instruction.Left.OperandType == OperandType.Label)
                 {
-                    if (!labels.TryGetValue(instruction.Left.Label, out label))
-                        throw new AssemblerException(string.Format("Unresolved label '{0}' on line {1}.", instruction.Left.Label, instruction.Left.Line));
+					if (!labels.TryGetValue(instruction.Left.Label, out label))
+						throw new AssemblerException(string.Format("Unresolved label '{0}' on line {1}.", instruction.Left.Label,
+							                                        instruction.Left.Line));
 
-                    instruction.Left.Payload = (short)label.Address;
+	                instruction.Left.Payload = (short)label.Address;
                 }
 
                 if (instruction.Right != null && instruction.Right.OperandType == OperandType.Label)
@@ -80,12 +87,12 @@ namespace Assembler
 
             while (t.Type != TokenType.EndOfFile)
             {
-                if (t.Type == TokenType.Label)
+				if (t.Type == TokenType.Label)
                 {
                     if (labels.ContainsKey(t.Value))
                         throw new AssemblerException(string.Format("Duplicate label '{0}' on line {1}.", t.Value, t.Line));
 
-                    labels.Add(t.Value, new Label(t.Value, instructions.Count));
+					labels.Add(t.Value, new Label(t.Value, instructions.Count));
                     pos++;
                 }
                 else if (t.Type == TokenType.Keyword)
@@ -219,7 +226,8 @@ namespace Assembler
             try
             {
                 t = tokens[pos++];
-                if (t.Type == TokenType.Word)
+
+				if (t.Type == TokenType.Word)
                 {
                     Registers register;
                     if (Enum.TryParse(t.Value, true, out register))
