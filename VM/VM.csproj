@@ -74,6 +74,7 @@
     <Compile Include="ConfigFile.cs" />
     <Compile Include="Controller.cs" />
     <Compile Include="Device.cs" />
+    <Compile Include="HardDrive.cs" />
     <Compile Include="IMemory.cs" />
     <Compile Include="Instruction.cs" />
     <Compile Include="MemoryWrapper.cs" />

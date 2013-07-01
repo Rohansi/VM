@@ -62,6 +62,8 @@ namespace VM
                 machine.Devices.Add(controller);
             }
 
+	        machine.Devices.Add(new HardDrive(machine, "test.img"));
+
             var file = Config.DefaultFile;
             if (args.Length > 0)
                 file = args[0];
