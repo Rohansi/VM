@@ -73,7 +73,7 @@
     <Compile Include="Devices\Controller.cs" />
     <Compile Include="Device.cs" />
     <Compile Include="Devices\HardDrive.cs" />
-    <Compile Include="Devices\Timer.cs" />
+    <Compile Include="Devices\Motherboard.cs" />
     <Compile Include="IMemory.cs" />
     <Compile Include="Instruction.cs" />
     <Compile Include="MemoryWrapper.cs" />
