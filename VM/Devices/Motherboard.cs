@@ -1,8 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Diagnostics;
-using System.Linq;
-using System.Text;
 
 namespace VM
 {
@@ -12,10 +10,13 @@ namespace VM
 
         private VirtualMachine vm;
         private Timer[] timers;
+        private Random random;
 
         public Motherboard(VirtualMachine virtualMachine)
         {
             vm = virtualMachine;
+
+            random = new Random();
 
             timers = new Timer[TimerCount];
             for (var i = 0; i < TimerCount; i++)
@@ -26,6 +27,8 @@ namespace VM
 
         public override void Reset()
         {
+            random = new Random();
+
             foreach (var t in timers)
             {
                 t.Reset();
@@ -34,6 +37,11 @@ namespace VM
 
         public override void DataReceived(short port, short data)
         {
+            if (port == 9)
+            {
+                random = new Random(data);
+            }
+
             if (port >= 10 && port < 10 + TimerCount)
             {
                 timers[port - 10].DataReceived(data);
@@ -43,6 +51,11 @@ namespace VM
 
         public override short? DataRequested(short port)
         {
+            if (port == 9)
+            {
+                return (short)random.Next(short.MinValue, short.MaxValue);
+            }
+
             if (port >= 10 && port < 10 + TimerCount)
             {
                 return timers[port - 10].DataRequested();
