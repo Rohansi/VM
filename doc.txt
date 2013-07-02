@@ -10,22 +10,13 @@ vmConfig.json contains settings for the VM:
 	ChangeSpeed		Key to change VM target speed (shown in the status bar)
 	Reload			Key to reset and reload the VM
 	
-	Controller		Controller plugged in or not (bool of course)
-	ControllerUp	Key bindings
-	ControllerDown	..
-	ControllerLeft	..
-	ControllerRight	..
-	ControllerA		..
-	ControllerB		..
-	ControllerC		..
-	
 Possible keys can be found here:
 	http://sfml-dev.org/documentation/2.0/classsf_1_1Keyboard.php#acb4cacd7cc5802dec45724cf3314a142
 
 Display
 --------------------
 200x80 character display
-2 bytes per character, first is ASCII second is color
+2 bytes per character, first is CP437 second is color
 32000 bytes of RAM
 
 Registers
@@ -67,6 +58,7 @@ Instructions
 1A	JB		DST			Jump if below
 1B	JAE		DST			Jump if above or equal
 1C	JBE		DST			Jump if below or equal
+1D	JNE		DST			Jump if not equal
 
 All math instructions (including bitwise) change the zero flag based on the result (which will be stored in DST).
 
@@ -79,7 +71,7 @@ Operands (DST, SRC) can be one the following values:
 
 Controller
 --------------------
-Currently the only device. Uses port 100.
+Currently the only input device. Uses port 100 by default.
 
 Read from this port to get controller status:
 	00000000 PCBARLDU
@@ -98,12 +90,13 @@ Writing to this device currently does nothing.
 Flags register
 --------------------
 The internal flags register has a flag for each condition:
-	0000BAEZ
+	T0000000 0000BAEZ
 	
 	Z	Zero
 	E	Equal
 	A	Above
 	B	Below
+	T	Trap flag
 
 Bytecode
 --------------------

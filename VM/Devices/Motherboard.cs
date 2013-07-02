@@ -45,7 +45,6 @@ namespace VM
             if (port >= 10 && port < 10 + TimerCount)
             {
                 timers[port - 10].DataReceived(data);
-                return;
             }
         }
 
