@@ -1,117 +1,119 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Globalization;
+using System.Linq;
 using System.Text;
 
 namespace Assembler
 {
-    class Assembler
-    {
-        private TokenList<Token> tokens;
-        private int pos;
-        private List<Instruction> instructions;
-        private Dictionary<string, Label> labels;
+	class Assembler
+	{
+		private TokenList<Token> tokens;
+		private int pos;
+		private List<Instruction> instructions;
+		private Dictionary<string, Label> labels;
 
-        public byte[] Binary;
+		public byte[] Binary;
 
-        public Assembler(string source)
-        {
-            var tokenizer = new AssemblyTokenizer(source);
-            tokenizer.Scan();
+		public Assembler(string source)
+		{
+			var tokenizer = new AssemblyTokenizer(source);
+			tokenizer.Scan();
 
-            tokens = tokenizer.Tokens;
-            instructions = new List<Instruction>();
-            labels = new Dictionary<string, Label>();
+			tokens = tokenizer.Tokens;
+			instructions = new List<Instruction>();
+			labels = new Dictionary<string, Label>();
 
-            Parse();
-            Build();
-        }
+			Parse();
+			Build();
+		}
 
-        private void Build()
-        {
-            var offset = 0;
+		private void Build()
+		{
+			var offset = 0;
 
-            for (var i = 0; i < instructions.Count; i++)
-            {
-                var instruction = instructions[i];
+			for (var i = 0; i < instructions.Count; i++)
+			{
+				var instruction = instructions[i];
 
-                foreach (var label in labels.Values)
-                {
-                    if (label.Index == i)
-                        label.Address = offset;
-                }
+				foreach (var label in labels.Values)
+				{
+					if (label.Index == i)
+						label.Address = offset;
+				}
 
-                var bytes = instruction.Assemble();
-                offset += bytes.Length;
+				var bytes = instruction.Assemble();
+				offset += bytes.Length;
 
-                if (offset > 32000)
-                    throw new AssemblerException("Program exceeds 32000 bytes");
-            }
+				if (offset > 32000)
+					throw new AssemblerException("Program exceeds 32000 bytes");
+			}
 
-			foreach(Label label in labels.Values)
+			foreach (Label label in labels.Values)
 			{
 				if (label.Address == 0 && label.Index >= instructions.Count)
 					label.Address = offset;
 			}
 
-            var assembled = new List<byte>();
-            foreach (var instruction in instructions)
-            {
-                Label label;
+			var assembled = new List<byte>();
+			foreach (var instruction in instructions)
+			{
+				Label label;
 
-                if (instruction.Left != null && instruction.Left.OperandType == OperandType.Label)
-                {
+				if (instruction.Left != null && instruction.Left.OperandType == OperandType.Label)
+				{
 					if (!labels.TryGetValue(instruction.Left.Label, out label))
 						throw new AssemblerException(string.Format("Unresolved label '{0}' on line {1}.", instruction.Left.Label,
-							                                        instruction.Left.Line));
+																	instruction.Left.Line));
 
-	                instruction.Left.Payload = (short)label.Address;
-                }
+					instruction.Left.Payload = (short)label.Address;
+				}
 
-                if (instruction.Right != null && instruction.Right.OperandType == OperandType.Label)
-                {
-                    if (!labels.TryGetValue(instruction.Right.Label, out label))
-                        throw new AssemblerException(string.Format("Unresolved label '{0}' on line {1}.", instruction.Right.Label, instruction.Right.Line));
+				if (instruction.Right != null && instruction.Right.OperandType == OperandType.Label)
+				{
+					if (!labels.TryGetValue(instruction.Right.Label, out label))
+						throw new AssemblerException(string.Format("Unresolved label '{0}' on line {1}.", instruction.Right.Label, instruction.Right.Line));
 
-                    instruction.Right.Payload = (short)label.Address;
-                }
+					instruction.Right.Payload = (short)label.Address;
+				}
 
-                assembled.AddRange(instruction.Assemble());
-            }
+				assembled.AddRange(instruction.Assemble());
+			}
 
-            Binary = assembled.ToArray();
-        }
+			Binary = assembled.ToArray();
+		}
 
-        private void Parse()
-        {
-            var t = tokens[pos];
+		private void Parse()
+		{
+			var t = tokens[pos];
 
-            while (t.Type != TokenType.EndOfFile)
-            {
+			while (t.Type != TokenType.EndOfFile)
+			{
 				if (t.Type == TokenType.Label)
-                {
-                    if (labels.ContainsKey(t.Value))
-                        throw new AssemblerException(string.Format("Duplicate label '{0}' on line {1}.", t.Value, t.Line));
+				{
+					if (labels.ContainsKey(t.Value))
+						throw new AssemblerException(string.Format("Duplicate label '{0}' on line {1}.", t.Value, t.Line));
 
 					labels.Add(t.Value, new Label(t.Value, instructions.Count));
-                    pos++;
-                }
-                else if (t.Type == TokenType.Keyword)
-                {
-                    instructions.Add(ParseInstruction());
-                }
-                else if (t.Type == TokenType.Word && new List<string> { "db", "dw", "rb" }.Contains(t.Value.ToLower()))
-                {
-	                string type = t.Value;
-                    var dataLine = t.Line;
-                    t = tokens[++pos];
+					pos++;
+				}
+				else if (t.Type == TokenType.Keyword)
+				{
+					instructions.Add(ParseInstruction());
+				}
+				else if (t.Type == TokenType.Word && new List<string> { "db", "dw", "rb" }.Contains(t.Value.ToLower()))
+				{
+					string type = t.Value;
+					var dataLine = t.Line;
+					t = tokens[++pos];
 
-                    var data = new DataInstruction();
-                    while (t.Type == TokenType.String || t.Type == TokenType.Number)
-                    {
-                        if (t.Type == TokenType.String)
-                        {
-                            data.Add(t.Value);
-                        }
+					var data = new DataInstruction();
+					while (t.Type == TokenType.String || t.Type == TokenType.Number)
+					{
+						if (t.Type == TokenType.String)
+						{
+							data.Add(t.Value);
+						}
 						else if (type == "db")
 						{
 							byte value;
@@ -134,37 +136,37 @@ namespace Assembler
 							if (!int.TryParse(t.Value, out value))
 								throw new AssemblerException(String.Format("Value out of range (0-4294967295) on line {0}.", t.Line));
 
-							while(value-- > 0)
+							while (value-- > 0)
 								data.Add(0);
 						}
 
-                        pos++;
+						pos++;
 
-                        if (tokens[pos].Type == TokenType.Comma)
-                        {
-                            t = tokens[++pos];
-                            continue;
-                        }
+						if (tokens[pos].Type == TokenType.Comma)
+						{
+							t = tokens[++pos];
+							continue;
+						}
 
-                        break;
-                    }
+						break;
+					}
 
-                    if (!data.HasData)
-                        throw new AssemblerException(string.Format("Empty data directive on line {0}.", dataLine));
+					if (!data.HasData)
+						throw new AssemblerException(string.Format("Empty data directive on line {0}.", dataLine));
 
-                    instructions.Add(data);
-                }
-                else
-                {
-                    throw new AssemblerException(string.Format("Unexpected {0} on line {1}.", t.Type, t.Line));
-                }
+					instructions.Add(data);
+				}
+				else
+				{
+					throw new AssemblerException(string.Format("Unexpected {0} on line {1}.", t.Type, t.Line));
+				}
 
-                t = tokens[pos];
-            }
-        }
+				t = tokens[pos];
+			}
+		}
 
-        #region gross
-        private static Dictionary<Instructions, int> operandCounts = new Dictionary<Instructions, int>()
+		#region gross
+		private static Dictionary<Instructions, int> operandCounts = new Dictionary<Instructions, int>()
         {
             { Instructions.Set,     2 },
             { Instructions.Add,     2 },
@@ -202,90 +204,293 @@ namespace Assembler
             { Instructions.Jbe,     1 },
             { Instructions.Jne,     1 },
         };
-        #endregion
+		#endregion
 
-        private Instruction ParseInstruction()
-        {
-            var t = tokens[pos++];
+		private Instruction ParseInstruction()
+		{
+			var t = tokens[pos++];
 
-            Instructions type;
-            if (!Enum.TryParse(t.Value, true, out type))
-                throw new AssemblerException(string.Format("Expected opcode on line {0}.", t.Line));
+			Instructions type;
+			if (!Enum.TryParse(t.Value, true, out type))
+				throw new AssemblerException(string.Format("Expected opcode on line {0}.", t.Line));
 
-            var operandCount = operandCounts[type];
+			var operandCount = operandCounts[type];
 
-            Operand left;
-            Operand right;
+			Operand left;
+			Operand right;
 
-            if (operandCount == 0)
-                return new Instruction(type, null, null);
+			if (operandCount == 0)
+				return new Instruction(type, null, null);
 
-            left = ParseOperand();
+			left = ParseOperand();
 
-            if (operandCount == 1)
-                return new Instruction(type, left, null);
+			if (operandCount == 1)
+				return new Instruction(type, left, null);
 
-            Require(TokenType.Comma);
-            right = ParseOperand();
-            return new Instruction(type, left, right);
-        }
+			Require(TokenType.Comma);
+			right = ParseOperand();
+			return new Instruction(type, left, right);
+		}
 
-        private Operand ParseOperand()
-        {
-            var t = tokens[pos];
-            var ptr = false;
+		private Operand ParseOperand()
+		{
+			var t = tokens[pos];
+			var ptr = false;
 
-            if (t.Type == TokenType.OpenBracket)
-            {
-                ptr = true;
-                pos++;
-            }
+			if (t.Type == TokenType.OpenBracket)
+			{
+				ptr = true;
+				pos++;
+			}
 
-            try
-            {
-                t = tokens[pos++];
+			try
+			{
+				t = tokens[pos++];
 
 				if (t.Type == TokenType.Word)
-                {
-                    Registers register;
-                    if (Enum.TryParse(t.Value, true, out register))
-                    {
-                        return Operand.FromRegister(register, ptr);
-                    }
-                    else
-                    {
-                        return Operand.FromLabel(t.Value, t.Line, ptr);
-                    }
-                }
+				{
+					Registers register;
+					if (Enum.TryParse(t.Value, true, out register))
+					{
+						return Operand.FromRegister(register, ptr);
+					}
+					else
+					{
+						return Operand.FromLabel(t.Value, t.Line, ptr);
+					}
+				}
 
-                if (t.Type == TokenType.Number)
-                {
-                    return Operand.FromNumber(short.Parse(t.Value), ptr);
-                }
+				if (t.Type == TokenType.Number || t.Type == TokenType.OpenParentheses)
+				{
+					// TODO Hack
+					--pos;
+					short value = EvaluateExpression();
+					return Operand.FromNumber(EvaluateExpression(), ptr);
+				}
 
-                if (t.Type == TokenType.String)
-                {
-                    var strBytes = Encoding.GetEncoding(437).GetBytes(t.Value);
-                    if (strBytes.Length < 1 || strBytes.Length > 2)
-                        throw new AssemblerException(string.Format("Bad string literal size on line {0}.", t.Line));
-                    return Operand.FromNumber(strBytes.Length == 2 ? BitConverter.ToInt16(strBytes, 0) : (sbyte)strBytes[0], ptr);
-                }
+				if (t.Type == TokenType.String)
+				{
+					var strBytes = Encoding.GetEncoding(437).GetBytes(t.Value);
+					if (strBytes.Length < 1 || strBytes.Length > 2)
+						throw new AssemblerException(string.Format("Bad string literal size on line {0}.", t.Line));
+					return Operand.FromNumber(strBytes.Length == 2 ? BitConverter.ToInt16(strBytes, 0) : (sbyte)strBytes[0], ptr);
+				}
 
-                throw new AssemblerException(string.Format("Expected operand on line {0}.", t.Line));
-            }
-            finally
-            {
-                if (ptr)
-                {
-                    Require(TokenType.CloseBracket);
-                }
-            }
-        }
+				throw new AssemblerException(string.Format("Expected operand on line {0}.", t.Line));
+			}
+			finally
+			{
+				if (ptr)
+				{
+					Require(TokenType.CloseBracket);
+				}
+			}
+		}
 
-        private void Require(TokenType tokenType)
-        {
-            if (tokens[pos++].Type != tokenType)
-                throw new AssemblerException("Expected " + tokenType);
-        }
-    }
+		private void Require(TokenType tokenType)
+		{
+			if (tokens[pos++].Type != tokenType)
+				throw new AssemblerException("Expected " + tokenType);
+		}
+
+		private bool Accept(TokenType tokenType)
+		{
+			if (tokens[pos].Type == tokenType)
+			{
+				++pos;
+				return true;
+			}
+
+			return false;
+		}
+
+		private bool IsExpressionOperation(TokenType type)
+		{
+			return new List<TokenType>
+			{
+				TokenType.Add,
+				TokenType.Subtract
+			}.Contains(type);
+		}
+
+		private bool IsTermOperation(TokenType type)
+		{
+			return new List<TokenType>
+			{
+				TokenType.Multiply,
+				TokenType.Divide,
+				TokenType.Modulo
+			}.Contains(type);
+		}
+
+		class ExpressionOperation
+		{
+			public TokenType Operation { get; private set; }
+			public short Value { get; private set; }
+
+			public ExpressionOperation(TokenType operation)
+			{
+				Operation = operation;
+				Value = 0;
+			}
+
+			public ExpressionOperation(short value)
+			{
+				Operation = TokenType.Number;
+				Value = value;
+			}
+		}
+
+		private short EvaluateExpression()
+		{
+			Stack<ExpressionOperation> operations = new Stack<ExpressionOperation>();
+			Stack<int> stack = new Stack<int>();
+
+			Expression(operations);
+
+			operations = new Stack<ExpressionOperation>(operations);
+
+			while (operations.Count != 0)
+			{
+				ExpressionOperation operation = operations.Pop();
+				switch (operation.Operation)
+				{
+					case TokenType.Number:
+						stack.Push(operation.Value);
+						break;
+
+					case TokenType.Add:
+					{
+						int a = stack.Pop();
+						int b = stack.Pop();
+
+						b += a;
+
+						stack.Push(b);
+						break;
+					}
+
+					case TokenType.Subtract:
+					{
+						int a = stack.Pop();
+						int b = stack.Pop();
+
+						b -= a;
+
+						stack.Push(b);
+						break;
+					}
+
+					case TokenType.Multiply:
+					{
+						int a = stack.Pop();
+						int b = stack.Pop();
+
+						b *= a;
+
+						stack.Push(b);
+						break;
+					}
+
+					case TokenType.Divide:
+					{
+						int a = stack.Pop();
+						int b = stack.Pop();
+
+						b /= a;
+
+						stack.Push(b);
+						break;
+					}
+
+					case TokenType.Modulo:
+					{
+						int a = stack.Pop();
+						int b = stack.Pop();
+
+						b %= a;
+
+						stack.Push(b);
+						break;
+					}
+				}
+			}
+
+			// TODO Check if it overflowed short?
+			return (short)stack.Pop();
+		}
+
+		private void Expression(Stack<ExpressionOperation> operations)
+		{
+			Term(operations);
+
+			while (IsExpressionOperation(tokens[pos].Type))
+			{
+				if (Accept(TokenType.Add))
+				{
+					Term(operations);
+					operations.Push(new ExpressionOperation(TokenType.Add));
+				}
+				else if (Accept(TokenType.Subtract))
+				{
+					Term(operations);
+					operations.Push(new ExpressionOperation(TokenType.Subtract));
+				}
+				else
+					throw new AssemblerException("Expected expression operation.");
+			}
+		}
+
+		private void Term(Stack<ExpressionOperation> operations)
+		{
+			Factor(operations);
+
+			while (IsTermOperation(tokens[pos].Type))
+			{
+				if (Accept(TokenType.Multiply))
+				{
+					Factor(operations);
+					operations.Push(new ExpressionOperation(TokenType.Multiply));
+				}
+				else if (Accept(TokenType.Divide))
+				{
+					Factor(operations);
+					operations.Push(new ExpressionOperation(TokenType.Divide));
+				}
+				else if (Accept(TokenType.Modulo))
+				{
+					Factor(operations);
+					operations.Push(new ExpressionOperation(TokenType.Modulo));
+				}
+				else
+					throw new AssemblerException("Unexpected term operation.");
+			}
+		}
+
+		private void Factor(Stack<ExpressionOperation> operations)
+		{
+			if (Accept(TokenType.OpenParentheses))
+			{
+				Expression(operations);
+				Require(TokenType.CloseParentheses);
+			}
+			else if (tokens[pos].Type == TokenType.Number)
+			{
+				short value;
+				if (!short.TryParse(tokens[pos].Value, out value))
+					throw new AssemblerException(String.Format("Expected number on line {0}.", tokens[pos].Line));
+
+				operations.Push(new ExpressionOperation(value));
+				++pos;
+			}
+			else if (tokens[pos].Type == TokenType.Label)
+			{
+				throw new NotImplementedException();
+			}
+			else
+				throw new AssemblerException(
+					String.Format("Expected open parentheses, number or label on line {0}, got \"{1}\" instead.",
+								  tokens[pos].Line, tokens[pos].Value));
+		}
+	}
 }

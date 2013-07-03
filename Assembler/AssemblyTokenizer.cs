@@ -6,7 +6,9 @@ namespace Assembler
     public enum TokenType
     {
         EndOfFile, Number, String,
-        Word, Keyword, Label, Comma, OpenBracket, CloseBracket, Period
+        Word, Keyword, Label, Comma, OpenBracket, CloseBracket, Period,
+		OpenParentheses, CloseParentheses,
+		Add, Subtract, Multiply, Divide, Modulo
     }
 
     public struct Token
@@ -135,9 +137,51 @@ namespace Assembler
                             }
                         }
 
+						if (tok.Value == "(")
+						{
+							tokens.Add(new Token(TokenType.OpenParentheses, tok.Value, tok.Line));
+							break;
+						}
+
+						if (tok.Value == ")")
+						{
+							tokens.Add(new Token(TokenType.CloseParentheses, tok.Value, tok.Line));
+							break;
+						}
+
 						if (tok.Value == ".")
 						{
 							tokens.Add(new Token(TokenType.Period, tok.Value, tok.Line));
+							break;
+						}
+
+						if (tok.Value == "+")
+						{
+							tokens.Add(new Token(TokenType.Add, tok.Value, tok.Line));
+							break;
+						}
+
+						if (tok.Value == "-")
+						{
+							tokens.Add(new Token(TokenType.Subtract, tok.Value, tok.Line));
+							break;
+						}
+
+						if (tok.Value == "*")
+						{
+							tokens.Add(new Token(TokenType.Multiply, tok.Value, tok.Line));
+							break;
+						}
+
+						if (tok.Value == "/")
+						{
+							tokens.Add(new Token(TokenType.Divide, tok.Value, tok.Line));
+							break;
+						}
+
+						if (tok.Value == "%")
+						{
+							tokens.Add(new Token(TokenType.Modulo, tok.Value, tok.Line));
 							break;
 						}
 
