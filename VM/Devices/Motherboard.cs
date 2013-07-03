@@ -6,9 +6,8 @@ namespace VM
 {
     class Motherboard : Device
     {
-        private const int TimerCount = 4;
-
         private VirtualMachine vm;
+        private Debugger debugger;
         private Timer[] timers;
         private Random random;
 
@@ -16,10 +15,11 @@ namespace VM
         {
             vm = virtualMachine;
 
+            debugger = new Debugger(virtualMachine);
             random = new Random();
 
-            timers = new Timer[TimerCount];
-            for (var i = 0; i < TimerCount; i++)
+            timers = new Timer[4];
+            for (var i = 0; i < timers.Length; i++)
             {
                 timers[i] = new Timer();
             }
@@ -37,27 +37,36 @@ namespace VM
 
         public override void DataReceived(short port, short data)
         {
-            if (port == 9)
+            switch (port)
             {
-                random = new Random(data);
-            }
-
-            if (port >= 10 && port < 10 + TimerCount)
-            {
-                timers[port - 10].DataReceived(data);
+                case 3:
+                    debugger.DataReceived(data);
+                    break;
+                case 9:
+                    random = new Random(data);
+                    break;
+                case 10:
+                case 11:
+                case 12:
+                case 13:
+                    timers[port - 10].DataReceived(data);
+                    break;
             }
         }
 
         public override short? DataRequested(short port)
         {
-            if (port == 9)
+            switch (port)
             {
-                return (short)random.Next(short.MinValue, short.MaxValue);
-            }
-
-            if (port >= 10 && port < 10 + TimerCount)
-            {
-                return timers[port - 10].DataRequested();
+                case 3:
+                    return debugger.DataRequested();
+                case 9:
+                    return (short)random.Next(short.MinValue, short.MaxValue);
+                case 10:
+                case 11:
+                case 12:
+                case 13:
+                    return timers[port - 10].DataRequested();
             }
 
             return null;

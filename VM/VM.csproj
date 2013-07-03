@@ -5,7 +5,7 @@
     <Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
     <Platform Condition=" '$(Platform)' == '' ">AnyCPU</Platform>
     <ProjectGuid>{BFF499BE-492C-4FD1-9057-A37A962DD754}</ProjectGuid>
-    <OutputType>WinExe</OutputType>
+    <OutputType>Exe</OutputType>
     <AppDesignerFolder>Properties</AppDesignerFolder>
     <RootNamespace>VM</RootNamespace>
     <AssemblyName>VM</AssemblyName>
@@ -72,6 +72,7 @@
     <Compile Include="ConfigFile.cs" />
     <Compile Include="Devices\Controller.cs" />
     <Compile Include="Device.cs" />
+    <Compile Include="Devices\Debugger.cs" />
     <Compile Include="Devices\HardDrive.cs" />
     <Compile Include="Devices\Motherboard.cs" />
     <Compile Include="IMemory.cs" />
