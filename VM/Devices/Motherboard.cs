@@ -1,19 +1,24 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Diagnostics;
+using SFML.Graphics;
+using Texter;
 
 namespace VM
 {
     class Motherboard : Device
     {
-        private VirtualMachine vm;
+        private VirtualMachine machine;
         private Debugger debugger;
         private Timer[] timers;
         private Random random;
+        private TextDisplay display;
+        private Color[] originalPalette;
 
-        public Motherboard(VirtualMachine virtualMachine)
+        public Motherboard(VirtualMachine virtualMachine, TextDisplay textDisplay)
         {
-            vm = virtualMachine;
+            machine = virtualMachine;
+            display = textDisplay;
 
             debugger = new Debugger(virtualMachine);
             random = new Random();
@@ -22,6 +27,12 @@ namespace VM
             for (var i = 0; i < timers.Length; i++)
             {
                 timers[i] = new Timer();
+            }
+
+            originalPalette = new Color[256];
+            for (var i = 0; i < originalPalette.Length; i++)
+            {
+                originalPalette[i] = display.PaletteGet((byte)i);
             }
         }
 
@@ -33,6 +44,8 @@ namespace VM
             {
                 t.Reset();
             }
+
+            PaletteReset();
         }
 
         public override void DataReceived(short port, short data)
@@ -51,6 +64,25 @@ namespace VM
                 case 13:
                     timers[port - 10].DataReceived(data);
                     break;
+                case 20:
+                {
+                    if (data == 0)
+                    {
+                        PaletteReset();
+                        return;
+                    }
+
+                    for (var i = 0; i < 256; i++)
+                    {
+                        var colorOffset = data + (i * 3);
+                        var r = machine.Memory[colorOffset + 0];
+                        var g = machine.Memory[colorOffset + 1];
+                        var b = machine.Memory[colorOffset + 2];
+                        display.PaletteSet((byte)i, new Color(r, g, b));
+                    }
+
+                    break;
+                }
             }
         }
 
@@ -70,6 +102,14 @@ namespace VM
             }
 
             return null;
+        }
+
+        private void PaletteReset()
+        {
+            for (var i = 0; i < originalPalette.Length; i++)
+            {
+                display.PaletteSet((byte)i, originalPalette[i]);
+            }
         }
 
         private class Timer

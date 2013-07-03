@@ -49,7 +49,7 @@ namespace VM
 			memory = new MemoryWrapper(display);
 			machine = new VirtualMachine(memory);
 
-            machine.Devices.Add(new Motherboard(machine));
+            machine.Devices.Add(new Motherboard(machine, display));
 
             var devMap = new Dictionary<string, Type>()
             {
