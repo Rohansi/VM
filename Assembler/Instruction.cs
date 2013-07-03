@@ -87,11 +87,14 @@ namespace Assembler
 
     class DataInstruction : Instruction
     {
-        private List<byte> bytes = new List<byte>();
+        private readonly List<byte> bytes = new List<byte>();
 
         public bool HasData
         {
-            get { return bytes.Count > 0; }
+            get
+            {
+	            return bytes.Count > 0;
+            }
         }
          
         public void Add(byte value)

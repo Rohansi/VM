@@ -1,19 +1,35 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Globalization;
-using System.Linq;
 using System.Text;
 
 namespace Assembler
 {
 	class Assembler
 	{
-		private TokenList<Token> tokens;
+		private readonly TokenList<Token> tokens;
 		private int pos;
-		private List<Instruction> instructions;
-		private Dictionary<string, Label> labels;
+		private readonly List<Instruction> instructions;
+		private readonly Dictionary<string, Label> labels;
 
 		public byte[] Binary;
+
+		private class ExpressionOperation
+		{
+			public TokenType Operation { get; private set; }
+			public short Value { get; private set; }
+
+			public ExpressionOperation(TokenType operation)
+			{
+				Operation = operation;
+				Value = 0;
+			}
+
+			public ExpressionOperation(short value)
+			{
+				Operation = TokenType.Number;
+				Value = value;
+			}
+		}
 
 		public Assembler(string source)
 		{
@@ -166,7 +182,7 @@ namespace Assembler
 		}
 
 		#region gross
-		private static Dictionary<Instructions, int> operandCounts = new Dictionary<Instructions, int>()
+		private static readonly Dictionary<Instructions, int> operandCounts = new Dictionary<Instructions, int>
         {
             { Instructions.Set,     2 },
             { Instructions.Add,     2 },
@@ -216,19 +232,16 @@ namespace Assembler
 
 			var operandCount = operandCounts[type];
 
-			Operand left;
-			Operand right;
-
 			if (operandCount == 0)
 				return new Instruction(type, null, null);
 
-			left = ParseOperand();
+			Operand left = ParseOperand();
 
 			if (operandCount == 1)
 				return new Instruction(type, left, null);
 
 			Require(TokenType.Comma);
-			right = ParseOperand();
+			Operand right = ParseOperand();
 			return new Instruction(type, left, right);
 		}
 
@@ -247,32 +260,34 @@ namespace Assembler
 			{
 				t = tokens[pos++];
 
-				if (t.Type == TokenType.Word)
+				switch (t.Type)
 				{
-					Registers register;
-					if (Enum.TryParse(t.Value, true, out register))
+					case TokenType.Word:
 					{
-						return Operand.FromRegister(register, ptr);
+						Registers register;
+						if (Enum.TryParse(t.Value, true, out register))
+						{
+							return Operand.FromRegister(register, ptr);
+						}
+						else
+						{
+							return Operand.FromLabel(t.Value, t.Line, ptr);
+						}
 					}
-					else
+
+					case TokenType.BitwiseNot:
+					case TokenType.OpenParentheses:
+					case TokenType.Number:
+						--pos;
+						return Operand.FromNumber(EvaluateExpression(), ptr);
+
+					case TokenType.String:
 					{
-						return Operand.FromLabel(t.Value, t.Line, ptr);
+						var strBytes = Encoding.GetEncoding(437).GetBytes(t.Value);
+						if (strBytes.Length < 1 || strBytes.Length > 2)
+							throw new AssemblerException(string.Format("Bad string literal size on line {0}.", t.Line));
+						return Operand.FromNumber(strBytes.Length == 2 ? BitConverter.ToInt16(strBytes, 0) : (sbyte)strBytes[0], ptr);
 					}
-				}
-
-				if (t.Type == TokenType.Number || t.Type == TokenType.OpenParentheses)
-				{
-					// TODO Hack
-					--pos;
-					return Operand.FromNumber(EvaluateExpression(), ptr);
-				}
-
-				if (t.Type == TokenType.String)
-				{
-					var strBytes = Encoding.GetEncoding(437).GetBytes(t.Value);
-					if (strBytes.Length < 1 || strBytes.Length > 2)
-						throw new AssemblerException(string.Format("Bad string literal size on line {0}.", t.Line));
-					return Operand.FromNumber(strBytes.Length == 2 ? BitConverter.ToInt16(strBytes, 0) : (sbyte)strBytes[0], ptr);
 				}
 
 				throw new AssemblerException(string.Format("Expected operand on line {0}.", t.Line));
@@ -286,66 +301,12 @@ namespace Assembler
 			}
 		}
 
-		private void Require(TokenType tokenType)
-		{
-			if (tokens[pos++].Type != tokenType)
-				throw new AssemblerException("Expected " + tokenType);
-		}
-
-		private bool Accept(TokenType tokenType)
-		{
-			if (tokens[pos].Type == tokenType)
-			{
-				++pos;
-				return true;
-			}
-
-			return false;
-		}
-
-		private bool IsExpressionOperation(TokenType type)
-		{
-			return new List<TokenType>
-			{
-				TokenType.Add,
-				TokenType.Subtract
-			}.Contains(type);
-		}
-
-		private bool IsTermOperation(TokenType type)
-		{
-			return new List<TokenType>
-			{
-				TokenType.Multiply,
-				TokenType.Divide,
-				TokenType.Modulo
-			}.Contains(type);
-		}
-
-		class ExpressionOperation
-		{
-			public TokenType Operation { get; private set; }
-			public short Value { get; private set; }
-
-			public ExpressionOperation(TokenType operation)
-			{
-				Operation = operation;
-				Value = 0;
-			}
-
-			public ExpressionOperation(short value)
-			{
-				Operation = TokenType.Number;
-				Value = value;
-			}
-		}
-
 		private short EvaluateExpression()
 		{
 			Stack<ExpressionOperation> operations = new Stack<ExpressionOperation>();
 			Stack<int> stack = new Stack<int>();
 
-			Expression(operations);
+			BitwiseExpression(operations);
 
 			operations = new Stack<ExpressionOperation>(operations);
 
@@ -358,14 +319,43 @@ namespace Assembler
 						stack.Push(operation.Value);
 						break;
 
+					case TokenType.BitwiseNot:
+						stack.Push(~stack.Pop());
+						break;
+
+					case TokenType.BitwiseAnd:
+					{
+						int a = stack.Pop();
+						int b = stack.Pop();
+
+						stack.Push(b & a);
+						break;
+					}
+
+					case TokenType.BitwiseOr:
+					{
+						int a = stack.Pop();
+						int b = stack.Pop();
+
+						stack.Push(b | a);
+						break;
+					}
+
+					case TokenType.BitwiseXor:
+					{
+						int a = stack.Pop();
+						int b = stack.Pop();
+
+						stack.Push(b ^ a);
+						break;
+					}
+
 					case TokenType.Add:
 					{
 						int a = stack.Pop();
 						int b = stack.Pop();
 
-						b += a;
-
-						stack.Push(b);
+						stack.Push(b + a);
 						break;
 					}
 
@@ -374,9 +364,7 @@ namespace Assembler
 						int a = stack.Pop();
 						int b = stack.Pop();
 
-						b -= a;
-
-						stack.Push(b);
+						stack.Push(b - a);
 						break;
 					}
 
@@ -385,9 +373,7 @@ namespace Assembler
 						int a = stack.Pop();
 						int b = stack.Pop();
 
-						b *= a;
-
-						stack.Push(b);
+						stack.Push(b * a);
 						break;
 					}
 
@@ -396,9 +382,7 @@ namespace Assembler
 						int a = stack.Pop();
 						int b = stack.Pop();
 
-						b /= a;
-
-						stack.Push(b);
+						stack.Push(b / a);
 						break;
 					}
 
@@ -407,23 +391,52 @@ namespace Assembler
 						int a = stack.Pop();
 						int b = stack.Pop();
 
-						b %= a;
-
-						stack.Push(b);
+						stack.Push(b % a);
 						break;
 					}
 				}
 			}
 
-			// TODO Check if it overflowed short?
 			return (short)stack.Pop();
+		}
+
+		private void BitwiseExpression(Stack<ExpressionOperation> operations)
+		{
+			if (Accept(TokenType.BitwiseNot))
+			{
+				Expression(operations);
+				operations.Push(new ExpressionOperation(TokenType.BitwiseNot));
+			}
+			else
+				Expression(operations);
+
+			while (AssemblyTokenizer.IsBitwiseOperation(tokens[pos].Type))
+			{
+				if (Accept(TokenType.BitwiseAnd))
+				{
+					Expression(operations);
+					operations.Push(new ExpressionOperation(TokenType.BitwiseAnd));
+				}
+				else if (Accept(TokenType.BitwiseOr))
+				{
+					Expression(operations);
+					operations.Push(new ExpressionOperation(TokenType.BitwiseOr));
+				}
+				else if (Accept(TokenType.BitwiseXor))
+				{
+					Expression(operations);
+					operations.Push(new ExpressionOperation(TokenType.BitwiseXor));
+				}
+				else
+					throw new AssemblerException("Expected bitwise operation.");
+			}
 		}
 
 		private void Expression(Stack<ExpressionOperation> operations)
 		{
 			Term(operations);
 
-			while (IsExpressionOperation(tokens[pos].Type))
+			while (AssemblyTokenizer.IsExpressionOperation(tokens[pos].Type))
 			{
 				if (Accept(TokenType.Add))
 				{
@@ -444,7 +457,7 @@ namespace Assembler
 		{
 			Factor(operations);
 
-			while (IsTermOperation(tokens[pos].Type))
+			while (AssemblyTokenizer.IsTermOperation(tokens[pos].Type))
 			{
 				if (Accept(TokenType.Multiply))
 				{
@@ -490,6 +503,23 @@ namespace Assembler
 				throw new AssemblerException(
 					String.Format("Expected open parentheses, number or label on line {0}, got \"{1}\" instead.",
 								  tokens[pos].Line, tokens[pos].Value));
+		}
+
+		private void Require(TokenType tokenType)
+		{
+			if (tokens[pos++].Type != tokenType)
+				throw new AssemblerException("Expected " + tokenType);
+		}
+
+		private bool Accept(TokenType tokenType)
+		{
+			if (tokens[pos].Type == tokenType)
+			{
+				++pos;
+				return true;
+			}
+
+			return false;
 		}
 	}
 }

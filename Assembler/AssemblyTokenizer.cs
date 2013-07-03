@@ -8,7 +8,8 @@ namespace Assembler
         EndOfFile, Number, String,
         Word, Keyword, Label, Comma, OpenBracket, CloseBracket, Period,
 		OpenParentheses, CloseParentheses,
-		Add, Subtract, Multiply, Divide, Modulo
+		Add, Subtract, Multiply, Divide, Modulo,
+		BitwiseNot, BitwiseAnd, BitwiseOr, BitwiseXor
     }
 
     public struct Token
@@ -185,7 +186,31 @@ namespace Assembler
 							break;
 						}
 
-                        throw new AssemblerException(string.Format("Unexpected delimiter '{0}'", tok.Value));
+						if (tok.Value == "~")
+						{
+							tokens.Add(new Token(TokenType.BitwiseNot, tok.Value, tok.Line));
+							break;
+						}
+
+						if (tok.Value == "&")
+						{
+							tokens.Add(new Token(TokenType.BitwiseAnd, tok.Value, tok.Line));
+							break;
+						}
+
+						if (tok.Value == "|")
+						{
+							tokens.Add(new Token(TokenType.BitwiseOr, tok.Value, tok.Line));
+							break;
+						}
+
+						if (tok.Value == "^")
+						{
+							tokens.Add(new Token(TokenType.BitwiseXor, tok.Value, tok.Line));
+							break;
+						}
+
+                        throw new AssemblerException(String.Format("Unexpected delimiter '{0}'", tok.Value));
                     }
 
                     case BasicTokenType.Number:
@@ -201,11 +226,41 @@ namespace Assembler
                     }
 
                     default:
-                    throw new AssemblerException(string.Format("Unhandled BasicToken {0}", tok.Type));
+                    throw new AssemblerException(String.Format("Unhandled BasicToken {0}", tok.Type));
                 }
             }
 
             hasTokenized = true;
         }
+
+	    public static bool IsExpressionOperation(TokenType type)
+	    {
+		    return new List<TokenType>
+		    {
+			    TokenType.Add,
+			    TokenType.Subtract
+		    }.Contains(type);
+	    }
+
+	    public static bool IsTermOperation(TokenType type)
+	    {
+		    return new List<TokenType>
+		    {
+			    TokenType.Multiply,
+			    TokenType.Divide,
+			    TokenType.Modulo
+		    }.Contains(type);
+	    }
+
+	    public static bool IsBitwiseOperation(TokenType type)
+	    {
+		    return new List<TokenType>
+		    {
+			    TokenType.BitwiseNot,
+			    TokenType.BitwiseAnd,
+			    TokenType.BitwiseOr,
+			    TokenType.BitwiseXor
+		    }.Contains(type);
+	    }
     }
 }
