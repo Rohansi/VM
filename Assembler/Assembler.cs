@@ -264,7 +264,6 @@ namespace Assembler
 				{
 					// TODO Hack
 					--pos;
-					short value = EvaluateExpression();
 					return Operand.FromNumber(EvaluateExpression(), ptr);
 				}
 
