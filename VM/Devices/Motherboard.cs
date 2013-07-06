@@ -4,7 +4,7 @@ using System.Diagnostics;
 using SFML.Graphics;
 using Texter;
 
-namespace VM
+namespace VM.Devices
 {
     class Motherboard : Device
     {

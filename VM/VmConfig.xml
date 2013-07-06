@@ -29,6 +29,12 @@
             <Port>200</Port>
             <FileName>output.bin</FileName>
         </HardDrive>
+
+        <Speaker Enabled="true">
+            <Port>600</Port>
+            <SampleRate>44100</SampleRate>
+            <UpdateFrequency>60</UpdateFrequency>
+        </Speaker>
     </Devices>
 </VmConfig>
 

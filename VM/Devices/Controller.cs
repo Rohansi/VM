@@ -4,7 +4,7 @@ using System.Xml.Linq;
 using SFML.Graphics;
 using SFML.Window;
 
-namespace VM
+namespace VM.Devices
 {
     [Flags]
     public enum ControllerKeys : short

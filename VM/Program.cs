@@ -7,6 +7,7 @@ using System.Reflection;
 using SFML.Graphics;
 using SFML.Window;
 using Texter;
+using VM.Devices;
 
 namespace VM
 {
@@ -54,7 +55,8 @@ namespace VM
             var devMap = new Dictionary<string, Type>()
             {
                 { "Controller", typeof(Controller) },
-                { "HardDrive", typeof(HardDrive) }
+                { "HardDrive", typeof(HardDrive) },
+                { "Speaker", typeof(Speaker) },
             };
 
             foreach (var devConfig in Config.Devices)
@@ -180,6 +182,11 @@ namespace VM
 				display.Draw(window, new Vector2f(0, 0));
 				window.Display();
 			}
+
+            foreach (var dev in machine.Devices)
+            {
+                dev.Dispose();
+            }
 		}
 
 		static void Load(string fileName)

@@ -53,6 +53,9 @@
     <StartupObject />
   </PropertyGroup>
   <ItemGroup>
+    <Reference Include="sfmlnet-audio-2">
+      <HintPath>..\Libraries\sfmlnet-audio-2.dll</HintPath>
+    </Reference>
     <Reference Include="sfmlnet-graphics-2">
       <HintPath>..\Libraries\sfmlnet-graphics-2.dll</HintPath>
     </Reference>
@@ -70,11 +73,19 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="ConfigFile.cs" />
+    <Compile Include="Devices\Audio\Generators\Noise.cs" />
+    <Compile Include="Devices\Audio\Generators\Sine.cs" />
+    <Compile Include="Devices\Audio\Generators\Square.cs" />
+    <Compile Include="Devices\Audio\ISoundEffect.cs" />
+    <Compile Include="Devices\Audio\ISoundModule.cs" />
+    <Compile Include="Devices\Audio\SoundMixer.cs" />
+    <Compile Include="Devices\Audio\SoundPlayer.cs" />
     <Compile Include="Devices\Controller.cs" />
     <Compile Include="Device.cs" />
     <Compile Include="Devices\Debugger.cs" />
     <Compile Include="Devices\HardDrive.cs" />
     <Compile Include="Devices\Motherboard.cs" />
+    <Compile Include="Devices\Speaker.cs" />
     <Compile Include="IMemory.cs" />
     <Compile Include="Instruction.cs" />
     <Compile Include="MemoryWrapper.cs" />

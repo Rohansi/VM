@@ -3,7 +3,7 @@ using System.IO;
 using System.Xml.Linq;
 using SFML.Graphics;
 
-namespace VM
+namespace VM.Devices
 {
     class HardDrive : Device
     {
