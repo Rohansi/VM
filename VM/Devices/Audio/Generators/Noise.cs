@@ -3,7 +3,7 @@ using System.Collections.Generic;
 
 namespace VM.Devices.Audio.Generators
 {
-	class Noise : ISoundModule
+	class Noise : ISoundGenerator
     {
         public double Amplitude
         {

@@ -73,6 +73,7 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="ConfigFile.cs" />
+    <Compile Include="Devices\Audio\Generators\ISoundGenerator.cs" />
     <Compile Include="Devices\Audio\Generators\Noise.cs" />
     <Compile Include="Devices\Audio\Generators\Sine.cs" />
     <Compile Include="Devices\Audio\Generators\Square.cs" />

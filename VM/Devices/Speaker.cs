@@ -16,10 +16,7 @@ namespace VM.Devices
         private uint sampleRate;
         private SoundPlayer player;
         private SoundMixer mixer;
-        private Square square1;
-        private Square square2;
-        private Sine sine;
-        private Noise noise;
+        private List<ISoundGenerator> generators;
 
         public Speaker(RenderWindow window, VirtualMachine virtualMachine, XElement config)
         {
@@ -41,16 +38,14 @@ namespace VM.Devices
                 errorMsg = "Init failed";
                 player = new SoundPlayer(sampleRate, updateFreq);
 
-                square1 = new Square();
-                square2 = new Square();
-                sine = new Sine();
-                noise = new Noise();
+                generators = new List<ISoundGenerator>();
+                generators.Add(new Square());
+                generators.Add(new Square());
+                generators.Add(new Sine());
+                generators.Add(new Noise());
 
                 mixer = new SoundMixer();
-                mixer.AddSource(square1);
-                mixer.AddSource(square2);
-                mixer.AddSource(sine);
-                mixer.AddSource(noise);
+                generators.ForEach(mixer.AddSource);
 
                 Reset();
 
@@ -65,17 +60,11 @@ namespace VM.Devices
 
         public override void Reset()
         {
-            square1.Amplitude = 0;
-            square1.Frequency = 250;
-
-            square2.Amplitude = 0;
-            square2.Frequency = 250;
-
-            sine.Amplitude = 0;
-            sine.Frequency = 250;
-
-            noise.Amplitude = 0;
-            noise.Frequency = 250;
+            foreach (var generator in generators)
+            {
+                generator.Amplitude = 0;
+                generator.Frequency = 250;
+            }
         }
 
         public override void DataReceived(short port, short data)
@@ -88,39 +77,18 @@ namespace VM.Devices
                 // TODO: device status
                 return;
             }
-
-            var noteByte = (byte)((ushort)data & 255);
-            var amplitudeByte = (byte)((ushort)data >> 8);
-
-            var frequency = NoteToFrequency(noteByte);
-            var amplitude = (double)amplitudeByte / byte.MaxValue;
             
-            if (port == devPort + 1)
+            if (port > devPort && port <= devPort + generators.Count)
             {
-                square1.Frequency = frequency;
-                square1.Amplitude = amplitude;
-                return;
-            }
+                var noteByte = (byte)((ushort)data & 255);
+                var amplitudeByte = (byte)((ushort)data >> 8);
 
-            if (port == devPort + 2)
-            {
-                square2.Frequency = frequency;
-                square2.Amplitude = amplitude;
-                return;
-            }
+                var frequency = NoteToFrequency(noteByte);
+                var amplitude = (double)amplitudeByte / byte.MaxValue;
 
-            if (port == devPort + 3)
-            {
-                sine.Frequency = frequency;
-                sine.Amplitude = amplitude;
-                return;
-            }
-
-            if (port == devPort + 4)
-            {
-                noise.Frequency = frequency;
-                noise.Amplitude = amplitude;
-                return;
+                var generatorIndex = port - devPort - 1;
+                generators[generatorIndex].Frequency = frequency;
+                generators[generatorIndex].Amplitude = amplitude;
             }
         }
 
