@@ -19,6 +19,8 @@ namespace VM
             Trap = 1 << 15
         }
 
+        private readonly Instruction instruction;
+
         public readonly short[] Registers;
         public short IP;
         public short SP;
@@ -32,6 +34,8 @@ namespace VM
             Registers = new short[16];
             Memory = memory;
             Devices = new List<Device>();
+
+            instruction = new Instruction(this);
         }
 
         public void Reset()
@@ -61,7 +65,7 @@ namespace VM
             if (Flags.HasFlag(Flag.Trap) && !overrideTrap)
                 return;
 
-            var instruction = new Instruction(this);
+            instruction.Decode();
             short result = 0;
 
             //Console.WriteLine("{0,-8} {1}", ip, instruction);

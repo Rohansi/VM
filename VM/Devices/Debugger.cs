@@ -33,6 +33,7 @@ namespace VM.Devices
         private List<DisassemblyLine> GenerateDisassembly(short address, short length)
         {
             var res = new List<DisassemblyLine>();
+            var instruction = new Instruction(vm);
             var originalIP = vm.IP;
 
             vm.IP = address;
@@ -45,7 +46,7 @@ namespace VM.Devices
                 {
                     try
                     {
-                        var instruction = new Instruction(vm);
+                        instruction.Decode();
                         res.Add(new DisassemblyLine(previousIP, instruction.ToString()));
                     }
                     catch

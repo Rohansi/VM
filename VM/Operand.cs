@@ -5,13 +5,17 @@ namespace VM
     class Operand
     {
         private readonly VirtualMachine machine;
-        private readonly int type;
-        private readonly bool ptr;
-        private readonly short payload;
+        private int type;
+        private bool ptr;
+        private short payload;
 
-        public Operand(VirtualMachine machine, int type, bool ptr, short payload)
+        public Operand(VirtualMachine machine)
         {
             this.machine = machine;
+        }
+
+        public void Change(int type, bool ptr, short payload)
+        {
             this.type = type;
             this.ptr = ptr;
             this.payload = payload;

@@ -18,11 +18,21 @@ namespace VM
     {
         private static int[] operandCounts;
 
-        public readonly Instructions Type;
+        private readonly VirtualMachine machine;
+
+        public Instructions Type;
         public readonly Operand Left;
         public readonly Operand Right;
 
-        public Instruction(VirtualMachine machine)
+        public Instruction(VirtualMachine virtualMachine)
+        {
+            machine = virtualMachine;
+
+            Left = new Operand(machine);
+            Right = new Operand(machine);
+        }
+
+        public void Decode()
         {
             var memory = machine.Memory;
 
@@ -63,7 +73,7 @@ namespace VM
             if (leftType == 18) // full payload
                 leftPayload = (short)(machine.Memory[machine.IP++] | (machine.Memory[machine.IP++] << 8));
 
-            Left = new Operand(machine, leftType, leftPtr, leftPayload);
+            Left.Change(leftType, leftPtr, leftPayload);
 
             if (operandCount == 1)
                 return;
@@ -71,15 +81,15 @@ namespace VM
             if (rightType == 18)
                 rightPayload = (short)(machine.Memory[machine.IP++] | (machine.Memory[machine.IP++] << 8));
 
-            Right = new Operand(machine, rightType, rightPtr, rightPayload);
+            Right.Change(rightType, rightPtr, rightPayload);
         }
 
         public override string ToString()
         {
             var res = Type.ToString().ToUpper();
-            if (Left != null)
+            if (operandCounts[(int)Type] >= 1)
                 res += " " + Left;
-            if (Right != null)
+            if (operandCounts[(int)Type] >= 2)
                 res += ", " + Right;
             return res;
         }
