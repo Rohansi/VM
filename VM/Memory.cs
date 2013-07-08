@@ -3,7 +3,7 @@ using Texter;
 
 namespace VM
 {
-    class MemoryWrapper : TextRenderer, IMemory
+    class Memory : TextRenderer
     {
         private byte[] memory;
 
@@ -25,7 +25,7 @@ namespace VM
             }
         }
 
-        public MemoryWrapper()
+        public Memory()
         {
             memory = new byte[32000];
 

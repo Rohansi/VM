@@ -87,9 +87,8 @@
     <Compile Include="Devices\HardDrive.cs" />
     <Compile Include="Devices\Motherboard.cs" />
     <Compile Include="Devices\Speaker.cs" />
-    <Compile Include="IMemory.cs" />
     <Compile Include="Instruction.cs" />
-    <Compile Include="MemoryWrapper.cs" />
+    <Compile Include="Memory.cs" />
     <Compile Include="Operand.cs" />
     <Compile Include="Program.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />

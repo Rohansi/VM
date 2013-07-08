@@ -28,7 +28,7 @@ namespace VM
         static RenderWindow window;
         static TextDisplay display;
         static VirtualMachine machine;
-        static MemoryWrapper memory;
+        static Memory memory;
         static string error;
 
         static void Main(string[] args)
@@ -47,7 +47,7 @@ namespace VM
             window.Closed += (sender, e) => window.Close();
 
             display = new TextDisplay(Width, Height);
-            memory = new MemoryWrapper();
+            memory = new Memory();
             machine = new VirtualMachine(memory);
 
             machine.Devices.Add(new Motherboard(machine, display));

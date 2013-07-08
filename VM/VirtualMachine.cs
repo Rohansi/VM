@@ -24,10 +24,10 @@ namespace VM
         public short SP;
         public Flag Flags;
 
-        public readonly IMemory Memory;
+        public readonly Memory Memory;
         public List<Device> Devices;
 
-        public VirtualMachine(IMemory memory)
+        public VirtualMachine(Memory memory)
         {
             Registers = new short[16];
             Memory = memory;
