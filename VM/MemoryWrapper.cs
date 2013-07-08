@@ -3,9 +3,9 @@ using Texter;
 
 namespace VM
 {
-    class MemoryWrapper : IMemory
+    class MemoryWrapper : TextRenderer, IMemory
     {
-        private TextRenderer _display;
+        private byte[] memory;
 
         public byte this[int i]
         {
@@ -14,40 +14,34 @@ namespace VM
                 if (i < 0 || i > 32000)
                     throw new VmException(string.Format("Memory read from {0}", i));
 
-                var chI = i / 2;
-                var x = chI % 200;
-                var y = chI / 200;
-                var ch = _display.Get(x, y);
-
-                if ((i & 1) == 0)
-                    return (byte)ch.Glyph;
-                return (byte)ch.Foreground;
+                return memory[i];
             }
             set
             {
                 if (i < 0 || i > 32000)
                     throw new VmException(string.Format("Memory write to {0}", i));
 
-                var chI = i / 2;
-                var x = chI % 200;
-                var y = chI / 200;
-
-                if ((i & 1) == 0)
-                    _display.Set(x, y, Character.Create(value));
-                else
-                    _display.Set(x, y, Character.Create(-1, value));
+                memory[i] = value;
             }
         }
 
-        public MemoryWrapper(TextRenderer display)
+        public MemoryWrapper()
         {
-            if (display == null)
-                throw new ArgumentNullException("display");
+            memory = new byte[32000];
 
-            if (display.Width > 200 || display.Height < 80)
-                throw new ArgumentException("display must be 200 wide and at least 80 tall");
+            Width = 200;
+            Height = 80;
+        }
 
-            _display = display;
+        public override void Set(int x, int y, Character character, bool blend = true)
+        {
+            throw new NotImplementedException();
+        }
+
+        public override Character Get(int x, int y)
+        {
+            var cell = (y * Width + x) * 2;
+            return Character.Create(memory[cell], memory[cell + 1], 0);
         }
     }
 }
