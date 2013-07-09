@@ -85,6 +85,7 @@
     <Compile Include="Device.cs" />
     <Compile Include="Devices\Debugger.cs" />
     <Compile Include="Devices\HardDrive.cs" />
+    <Compile Include="Devices\Keyboard.cs" />
     <Compile Include="Devices\Motherboard.cs" />
     <Compile Include="Devices\Speaker.cs" />
     <Compile Include="Instruction.cs" />

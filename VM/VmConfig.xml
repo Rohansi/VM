@@ -25,6 +25,10 @@
             <C>D</C>
         </Controller>
 
+        <Keyboard Enabled="true">
+            <Port>150</Port>
+        </Keyboard>
+
         <HardDrive Enabled="true">
             <Port>200</Port>
             <FileName>output.bin</FileName>

@@ -7,7 +7,6 @@ using System.Reflection;
 using SFML.Graphics;
 using SFML.Window;
 using Texter;
-using VM.Devices;
 
 namespace VM
 {
@@ -50,13 +49,14 @@ namespace VM
             memory = new Memory();
             machine = new VirtualMachine(memory);
 
-            machine.Devices.Add(new Motherboard(machine, display));
+            machine.Devices.Add(new Devices.Motherboard(machine, display));
 
             var devMap = new Dictionary<string, Type>()
             {
-                { "Controller", typeof(Controller) },
-                { "HardDrive", typeof(HardDrive) },
-                { "Speaker", typeof(Speaker) },
+                { "Controller", typeof(Devices.Controller) },
+                { "Keyboard", typeof(Devices.Keyboard) },
+                { "HardDrive", typeof(Devices.HardDrive) },
+                { "Speaker", typeof(Devices.Speaker) },
             };
 
             foreach (var devConfig in Config.Devices)
