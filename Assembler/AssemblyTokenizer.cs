@@ -31,11 +31,13 @@ namespace Assembler
         private readonly string source;
         private readonly List<Token> tokens;
         private bool hasTokenized;
+	    private readonly Dictionary<string, List<Token>> defines; 
 
         public AssemblyTokenizer(string input)
         {
             source = input;
             tokens = new List<Token>();
+			defines = new Dictionary<string, List<Token>>();
         }
 
         public TokenList<Token> Tokens
@@ -44,8 +46,17 @@ namespace Assembler
             {
                 if (!hasTokenized)
                     throw new InvalidOperationException("Scan() has not been called");
-                var end = new Token(TokenType.EndOfFile, line: tokens[tokens.Count - 1].Line);
-                return new TokenList<Token>(tokens, end);
+
+				if (tokens.Count > 0)
+				{
+					var end = new Token(TokenType.EndOfFile, line: tokens[tokens.Count - 1].Line);
+					return new TokenList<Token>(tokens, end);
+				}
+				else
+				{
+					var end = new Token(TokenType.EndOfFile, line: 1);
+					return new TokenList<Token>(tokens, end);
+				}
             }
         }
 
@@ -101,7 +112,14 @@ namespace Assembler
                                 tokens.Add(new Token(TokenType.Keyword, tok.Value.ToLower(), tok.Line));
                                 break;
                             default:
-                                tokens.Add(new Token(TokenType.Word, tok.Value, tok.Line));
+								if (defines.ContainsKey(tok.Value))
+								{
+									List<Token> define = defines[tok.Value];
+									foreach(Token token in define)
+										tokens.Add(new Token(token.Type, token.Value, tok.Line));
+								}
+								else
+									tokens.Add(new Token(TokenType.Word, tok.Value, tok.Line));
                                 break;
                         }
                         break;
@@ -137,6 +155,32 @@ namespace Assembler
                                 break;
                             }
                         }
+
+						if (tok.Value == "#")
+						{
+							tok = t[++i];
+							switch(tok.Value)
+							{
+								case "define":
+								{
+									List<Token> defineTokens = new List<Token>();
+									BasicToken name = t[++i];
+
+									while (t[++i].Line == name.Line)
+									{
+										defineTokens.Add(new Token(TokenType.Number, t[i].Value, t[i].Line));
+									}
+
+									defines.Add(name.Value, defineTokens);
+									--i;
+									break;
+								}
+
+								default:
+									throw new AssemblerException(String.Format("Unexpected preprocessor directive \"{0}\".", tok.Value));
+							}
+							break;
+						}
 
 						if (tok.Value == "(")
 						{
@@ -235,7 +279,7 @@ namespace Assembler
 
 	    public static bool IsExpressionOperation(TokenType type)
 	    {
-		    return new List<TokenType>
+		    return new System.Collections.Generic.List<TokenType>
 		    {
 			    TokenType.Add,
 			    TokenType.Subtract
@@ -244,7 +288,7 @@ namespace Assembler
 
 	    public static bool IsTermOperation(TokenType type)
 	    {
-		    return new List<TokenType>
+		    return new System.Collections.Generic.List<TokenType>
 		    {
 			    TokenType.Multiply,
 			    TokenType.Divide,
@@ -254,7 +298,7 @@ namespace Assembler
 
 	    public static bool IsBitwiseOperation(TokenType type)
 	    {
-		    return new List<TokenType>
+		    return new System.Collections.Generic.List<TokenType>
 		    {
 			    TokenType.BitwiseNot,
 			    TokenType.BitwiseAnd,

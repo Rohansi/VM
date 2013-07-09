@@ -174,7 +174,7 @@ namespace Assembler
 				}
 				else
 				{
-					throw new AssemblerException(string.Format("Unexpected {0} on line {1}.", t.Type, t.Line));
+					throw new AssemblerException(string.Format("Unexpected {0} on line {1}.", t.Value, t.Line));
 				}
 
 				t = tokens[pos];

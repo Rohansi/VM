@@ -14,7 +14,7 @@ namespace Assembler
     public class Tokenizer
     {
         private const char LineBreak = '\n';
-        private const string Delimiters = ":,[]().+-*/%~&|^";
+        private const string Delimiters = ":,[]().+-*/%~&|^#";
 
         private readonly string source;
         private readonly List<BasicToken> tokens;
