@@ -16,20 +16,20 @@ namespace Assembler
 			var input = args[0];
 			var output = args[1];
 
-			//try
-			//{
+			try
+			{
 				var a = new Assembler(File.ReadAllText(input));
 				File.WriteAllBytes(output, a.Binary);
 				Console.WriteLine("Assembled to {0} bytes", a.Binary.Length);
-			/*}
+			}
 			catch (AssemblerException e)
 			{
-				Console.WriteLine(e.Message);
+				Console.WriteLine("Error: {0}", e.Message);
 			}
 			catch (Exception e)
 			{
 				Console.WriteLine(e.ToString());
-			}*/
+			}
 		}
 	}
 }

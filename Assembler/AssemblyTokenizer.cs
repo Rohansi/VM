@@ -154,17 +154,23 @@ namespace Assembler
 							{
 								case "include":
 								{
-									string sourceFilename = "";
-									BasicToken filename = sourceTokens[i];
-									while (sourceTokens[++i].Line == filename.Line && i < sourceTokens.Count)
-										sourceFilename += sourceTokens[i].Value;
+									BasicToken filenameToken = sourceTokens[++i];
+									string includeSource;
 
-									string includeSource = File.ReadAllText(sourceFilename.Replace("\"", null));
+									try
+									{
+										includeSource = File.ReadAllText(filenameToken.Value);
+									}
+									catch (Exception)
+									{
+										throw new AssemblerException(String.Format("Cannot open included file \"{0}\" at {2}:{1}.",
+											filenameToken.Value, filenameToken.Line, filenameToken.Filename));
+									}
+
 									var tokenizer = new Tokenizer(includeSource);
 									tokenizer.Scan();
 
 									ScanSource(tokenizer.Tokens);
-									--i;
 									break;
 								}
 

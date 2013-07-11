@@ -33,7 +33,7 @@ namespace Assembler
 
 		public Assembler(string source)
 		{
-			var tokenizer = new AssemblyTokenizer(source);
+			AssemblyTokenizer tokenizer = new AssemblyTokenizer(source);
 			tokenizer.Scan();
 
 			tokens = tokenizer.Tokens;
