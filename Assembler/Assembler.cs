@@ -379,19 +379,35 @@ namespace Assembler
 
 					case TokenType.Divide:
 					{
-						int a = stack.Pop();
-						int b = stack.Pop();
+						try
+						{
+							int a = stack.Pop();
+							int b = stack.Pop();
 
-						stack.Push(b / a);
+							stack.Push(b / a);		
+						}
+						catch(Exception)
+						{
+							throw new AssemblerException(String.Format("Division by 0 in inline expression at {0}:{1}.", tokens[pos].Filename,
+							                             tokens[pos].Line));
+						}
 						break;
 					}
 
 					case TokenType.Modulo:
 					{
-						int a = stack.Pop();
-						int b = stack.Pop();
+						try
+						{
+							int a = stack.Pop();
+							int b = stack.Pop();
 
-						stack.Push(b % a);
+							stack.Push(b % a);
+						}
+						catch (Exception)
+						{
+							throw new AssemblerException(String.Format("Module by 0 in inline expression at {0}:{1}.", tokens[pos].Filename,
+							                                           tokens[pos].Line));
+						}
 						break;
 					}
 				}
