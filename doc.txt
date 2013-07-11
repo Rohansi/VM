@@ -102,13 +102,14 @@ Bytecode
 --------------------
 Instructions are assembled into the following format:
 	AAAAAEBB BBBCCCCC <Payload>
-	AAAAAEPP BBBBBBBB CCCCCCCC <Payload>
+	AAAAAEPP SBBBBBBB SCCCCCCC <Payload>
 	
 	A	5-bit instruction identifier (see first column in instructions)
 	B	First (left) operand
 	C	Second (right) operand
-	E	Toggle for the extended instruction format (3 bytes instead of 2)
-	P	Toggle for operand pointers, only in extended
+	E	Flag for the extended instruction format (3 bytes instead of 2)
+	P	Flag for operand pointers, only in extended
+	S	Flag for operand byte access, only in extended
 	
 Operands can have the following types:
 	
@@ -116,4 +117,5 @@ Operands can have the following types:
 	10	IP
 	11	SP
 	12	Immediate (stored in payload, left first)
+	13	Byte Immediate (stored in payload as unsigned byte, left first)
 	

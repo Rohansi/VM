@@ -40,7 +40,7 @@ namespace VM
             var id = byte1 >> 3;
             var extended = (byte1 & 4) != 0;
 
-            if (id > (int)Instructions.Count)
+            if (id >= (int)Instructions.Count)
                 throw new VmException(string.Format("Bad opcode at {0}", machine.IP - 1));
 
             Type = (Instructions)id;
@@ -50,11 +50,15 @@ namespace VM
                 return;
 
             var byte2 = memory[machine.IP++];
+
             var leftType = 0;
             var leftPtr = false;
+            var leftByte = false;
             short leftPayload = 0;
+
             var rightType = 0;
             var rightPtr = false;
+            var rightByte = false;
             short rightPayload = 0;
 
             if (!extended)
@@ -64,24 +68,33 @@ namespace VM
             }
             else
             {
-                leftType = byte2;
-                rightType = memory[machine.IP++];
+                var byte3 = memory[machine.IP++];
+
+                leftType = byte2 & 127;
                 leftPtr = (byte1 & 2) != 0;
+                leftByte = (byte2 & 128) != 0;
+
+                rightType = byte3 & 127;
                 rightPtr = (byte1 & 1) != 0;
+                rightByte = (byte3 & 128) != 0;
             }
 
-            if (leftType == 18) // full payload
+            if (leftType == 0x12) // full payload
                 leftPayload = (short)(machine.Memory[machine.IP++] | (machine.Memory[machine.IP++] << 8));
+            if (leftType == 0x13) // small payload
+                leftPayload = machine.Memory[machine.IP++];
 
-            Left.Change(leftType, leftPtr, leftPayload);
+            Left.Change(leftType, leftPtr, leftByte, leftPayload);
 
             if (operandCount == 1)
                 return;
 
-            if (rightType == 18)
+            if (rightType == 0x12)
                 rightPayload = (short)(machine.Memory[machine.IP++] | (machine.Memory[machine.IP++] << 8));
+            if (rightType == 0x13)
+                rightPayload = machine.Memory[machine.IP++];
 
-            Right.Change(rightType, rightPtr, rightPayload);
+            Right.Change(rightType, rightPtr, rightByte, rightPayload);
         }
 
         public override string ToString()

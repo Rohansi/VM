@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Text;
 
 namespace VM
 {
@@ -6,7 +7,8 @@ namespace VM
     {
         private readonly VirtualMachine machine;
         private int type;
-        private bool ptr;
+        private bool pointer;
+        private bool byteValue;
         private short payload;
 
         public Operand(VirtualMachine machine)
@@ -14,52 +16,54 @@ namespace VM
             this.machine = machine;
         }
 
-        public void Change(int type, bool ptr, short payload)
+        public void Change(int operandType, bool isPointer, bool isByte, short payloadValue)
         {
-            this.type = type;
-            this.ptr = ptr;
-            this.payload = payload;
+            type = operandType;
+            pointer = isPointer;
+            byteValue = isByte;
+            payload = payloadValue;
         }
 
         public short Get(bool resolvePtr = true)
         {
-            if (type == int.MaxValue)
-                return 0;
-
             short val = 0;
-            if (type < 16)
+            if (type <= 0x0F)
                 val = machine.Registers[type];
-            if (type == 16)
+            if (type == 0x10)
                 val = machine.IP;
-            if (type == 17)
+            if (type == 0x11)
                 val = machine.SP;
-            if (type == 18)
+            if (type == 0x12)
+                val = payload;
+            if (type == 0x13)
                 val = payload;
 
-            if (resolvePtr && ptr)
+            if (resolvePtr && pointer)
                 val = (short)((machine.Memory[val + 1] << 8) | machine.Memory[val]);
+
+            // don't trim memory locations
+            if (resolvePtr && byteValue)
+                val &= 0xFF;
 
             return val;
         }
 
         public void Set(short value)
         {
-            if (type == int.MaxValue)
-                return;
-
-            if (!ptr)
+            if (!pointer)
             {
-                if (type < 16)
-                    machine.Registers[type] = value;
-                if (type == 16)
-                    machine.IP = value;
-                if (type == 17)
-                    machine.SP = value;
+                if (type <= 0x0F)
+                    machine.Registers[type] = PreserveUpper(value, machine.Registers[type], byteValue);
+                if (type == 0x10)
+                    machine.IP = PreserveUpper(value, machine.IP, byteValue);
+                if (type == 0x11)
+                    machine.SP = PreserveUpper(value, machine.SP, byteValue);
 
+                // ignore immediate sets
                 return;
             }
 
-            var val = (ushort)value;
+            var val = (ushort)PreserveUpper(value, Get(), byteValue);
             var addr = Get(false);
             machine.Memory[addr] = (byte)(val & 0xFF);
             machine.Memory[addr + 1] = (byte)(val >> 8);
@@ -67,18 +71,36 @@ namespace VM
 
         public override string ToString()
         {
-            var res = "";
-            if (type < 16)
-                res = "R" + type.ToString("X");
-            if (type == 16)
-                res = "IP";
-            if (type == 17)
-                res = "SP";
-            if (type == 18)
-                res = payload.ToString();
-            if (ptr)
-                res = "[" + res + "]";
-            return res;
+            var sb = new StringBuilder();
+
+            if (byteValue)
+                sb.Append("byte ");
+            if (pointer)
+                sb.Append("[");
+
+            if (type <= 0x0F)
+                sb.Append("R" + type.ToString("X"));
+            if (type == 0x10)
+                sb.Append("IP");
+            if (type == 0x11)
+                sb.Append("SP");
+            if (type == 0x12)
+                sb.Append(payload.ToString("G"));
+            if (type == 0x13)
+                sb.Append(payload.ToString("G"));
+
+            if (pointer)
+                sb.Append("]");
+            
+            return sb.ToString();
+        }
+
+        private static short PreserveUpper(short newValue, short originalValue, bool isByte)
+        {
+            if (!isByte)
+                return newValue;
+
+            return (short)((originalValue & 0xFF00) | (newValue & 0xFF));
         }
     }
 }

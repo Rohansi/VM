@@ -68,7 +68,7 @@ namespace VM
             instruction.Decode();
             short result = 0;
 
-            //Console.WriteLine("{0,-8} {1}", ip, instruction);
+            //Console.WriteLine("{0,-8} {1}", IP, instruction);
 
             switch (instruction.Type)
             {
