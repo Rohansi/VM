@@ -17,20 +17,20 @@ namespace VM
 
     class Program
     {
-        const int Width = 200;
-        const int Height = 81;
-        const int CharWidth = 6;
-        const int CharHeight = 8;
+        private const int CharWidth = 6;
+        private const int CharHeight = 8;
 
         public static ConfigFile Config;
 
-        static RenderWindow window;
-        static TextDisplay display;
-        static VirtualMachine machine;
-        static Memory memory;
-        static string error;
+        private static RenderWindow window;
+        private static TextDisplay display;
+        private static VirtualMachine machine;
+        private static Memory memory;
 
-        static void Main(string[] args)
+        private static TextDisplay statusDisplay;
+        private static string error;
+
+        private static void Main(string[] args)
         {
             AppDomain.CurrentDomain.UnhandledException += (sender, e) => DumpError((Exception)e.ExceptionObject);
 
@@ -41,13 +41,15 @@ namespace VM
 
             TextDisplay.Initialize(CharWidth, CharHeight);
 
-            window = new RenderWindow(new VideoMode(Width * CharWidth, Height * CharHeight), "", Styles.Close);
+            window = new RenderWindow(new VideoMode(200 * CharWidth, 81 * CharHeight), "", Styles.Close);
             window.SetFramerateLimit(Config.Framerate);
             window.Closed += (sender, e) => window.Close();
 
-            display = new TextDisplay(Width, Height);
+            display = new TextDisplay(200, 80);
             memory = new Memory();
             machine = new VirtualMachine(memory);
+
+            statusDisplay = new TextDisplay(200, 1);
 
             machine.Devices.Add(new Devices.Motherboard(machine, display));
 
@@ -178,10 +180,12 @@ namespace VM
                 else if (running)
                     statusString = string.Format("Running: {0} instructions per second ({1})", previousSteps.Sum(), speed);
 
-                display.DrawRectangle(0, Height - 1, Width, 1, Character.Create(' '));
-                display.DrawText(0, Height - 1, statusString, Character.Create(foreground: 255));
+                statusDisplay.Clear(Character.Create(' '));
+                statusDisplay.DrawText(0, 0, statusString, Character.Create(foreground: 255));
 
                 display.Draw(window, new Vector2f(0, 0));
+                statusDisplay.Draw(window, new Vector2f(0, 80 * CharHeight));
+
                 window.Display();
             }
 
@@ -191,7 +195,7 @@ namespace VM
             }
         }
 
-        static void Load(string fileName)
+        private static void Load(string fileName)
         {
             try
             {
@@ -211,7 +215,7 @@ namespace VM
             }
         }
 
-        static void DumpError(Exception e)
+        private static void DumpError(Exception e)
         {
             // hope this works
             while (e is TypeInitializationException || e is TargetInvocationException)

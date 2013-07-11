@@ -35,10 +35,10 @@ namespace VM.Devices
             var res = new List<DisassemblyLine>();
             var instruction = new Instruction(vm);
             var originalIP = vm.IP;
-
-            vm.IP = address;
             var previousIP = vm.IP;
             var failed = false;
+
+            vm.IP = address;
 
             for (var i = 0; i < length; i++)
             {
