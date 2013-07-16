@@ -3,21 +3,21 @@ using SFML.Audio;
 
 namespace VM.Devices.Audio
 {
-	class SoundPlayer : SoundStream
-	{
-		public ISoundModule Source;
+    class SoundPlayer : SoundStream
+    {
+        public ISoundModule Source;
 
-	    private uint updateFreq;
+        private uint updateFreq;
 
-		public SoundPlayer(uint rate, uint update)
-		{
-		    updateFreq = update;
-		    Source = null;
-			Initialize(1, rate);
-		}
+        public SoundPlayer(uint rate, uint update)
+        {
+            updateFreq = update;
+            Source = null;
+            Initialize(1, rate);
+        }
 
-		protected override bool OnGetData(out short[] samples)
-		{
+        protected override bool OnGetData(out short[] samples)
+        {
             if (Source == null)
             {
                 samples = null;
@@ -26,11 +26,11 @@ namespace VM.Devices.Audio
 
             samples = Source.GetData(SampleRate / updateFreq, SampleRate);
             return true;
-		}
+        }
 
-		protected override void OnSeek(TimeSpan timeOffset)
-		{
-			
-		}
-	}
+        protected override void OnSeek(TimeSpan timeOffset)
+        {
+
+        }
+    }
 }

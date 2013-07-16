@@ -9,7 +9,7 @@ namespace VM
         Push, Pop,
         Jmp, Call, Ret,
         In, Out,
-        Cmp, Jz, Jnz, Je, Ja, Jb, Jae, Jbe, Jne, 
+        Cmp, Jz, Jnz, Je, Ja, Jb, Jae, Jbe, Jne,
 
         Count
     }

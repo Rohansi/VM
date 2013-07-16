@@ -91,7 +91,7 @@ namespace VM
 
             if (pointer)
                 sb.Append("]");
-            
+
             return sb.ToString();
         }
 

@@ -1,7 +1,5 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Linq;
-using System.Text;
 using System.Xml.Linq;
 using SFML.Graphics;
 using VM.Devices.Audio;
@@ -77,7 +75,7 @@ namespace VM.Devices
                 // TODO: device status
                 return;
             }
-            
+
             if (port > devPort && port <= devPort + generators.Count)
             {
                 var noteByte = (byte)((ushort)data & 255);

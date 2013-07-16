@@ -25,7 +25,7 @@ namespace VM.Devices
         private short devPort;
         private ControllerKeys state;
 
-        public Dictionary<ControllerKeys, KeyboardKey> KeyBindings; 
+        public Dictionary<ControllerKeys, KeyboardKey> KeyBindings;
 
         public Controller(RenderWindow window, VirtualMachine virtualMachine, XElement config)
         {
@@ -85,7 +85,7 @@ namespace VM.Devices
 
         public override void DataReceived(short port, short data)
         {
-            
+
         }
 
         public override short? DataRequested(short port)

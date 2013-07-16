@@ -93,19 +93,19 @@ namespace Assembler
         {
             get
             {
-	            return bytes.Count > 0;
+                return bytes.Count > 0;
             }
         }
-         
+
         public void Add(byte value)
         {
             bytes.Add(value);
         }
 
-		public void Add(short value)
-		{
-			bytes.AddRange(BitConverter.GetBytes(value));
-		}
+        public void Add(short value)
+        {
+            bytes.AddRange(BitConverter.GetBytes(value));
+        }
 
         public void Add(string value)
         {

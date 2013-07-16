@@ -1,6 +1,5 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Linq;
 using System.Text;
 using System.Xml.Linq;
 using SFML.Graphics;
@@ -40,7 +39,7 @@ namespace VM.Devices
 
         public override void DataReceived(short port, short data)
         {
-            
+
         }
 
         public override short? DataRequested(short port)

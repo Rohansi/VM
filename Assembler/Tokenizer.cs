@@ -252,13 +252,13 @@ namespace Assembler
         {
             if (pos + str.Length > source.Length)
                 return false;
-			
+
             return source.Substring(pos, str.Length) == str;
         }
 
         private void AddToken(BasicTokenType type, string value = "")
         {
-			// TODO Fix
+            // TODO Fix
             tokens.Add(new BasicToken(type, value, futureLine));
         }
     }
@@ -266,19 +266,19 @@ namespace Assembler
     public struct BasicToken
     {
         public readonly BasicTokenType Type;
-	    public readonly string Filename;
+        public readonly string Filename;
         public readonly int Line;
         public readonly string Value;
 
-		public BasicToken(BasicTokenType type, string value = null, int line = -1, string filename = "")
+        public BasicToken(BasicTokenType type, string value = null, int line = -1, string filename = "")
         {
             Type = type;
-	        Filename = filename;
+            Filename = filename;
             Line = line;
             Value = value;
         }
 
-	    public bool Matches(BasicToken template)
+        public bool Matches(BasicToken template)
         {
             if (!string.IsNullOrEmpty(template.Value) && Value != template.Value)
                 return false;

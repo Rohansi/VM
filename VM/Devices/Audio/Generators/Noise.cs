@@ -1,9 +1,8 @@
 ﻿using System;
-using System.Collections.Generic;
 
 namespace VM.Devices.Audio.Generators
 {
-	class Noise : ISoundGenerator
+    class Noise : ISoundGenerator
     {
         public double Amplitude
         {
@@ -28,9 +27,9 @@ namespace VM.Devices.Audio.Generators
         private object dataLock = new object();
         private double amplitude;
         private int frequency;
-		int position;
-		Random random = new Random();
-		short randomValue;
+        int position;
+        Random random = new Random();
+        short randomValue;
 
         public Noise()
         {
@@ -38,8 +37,8 @@ namespace VM.Devices.Audio.Generators
             Frequency = 250;
         }
 
-		public short[] GetData(uint size, uint rate)
-		{
+        public short[] GetData(uint size, uint rate)
+        {
             lock (dataLock)
             {
                 var data = new short[size];
@@ -60,6 +59,6 @@ namespace VM.Devices.Audio.Generators
 
                 return data;
             }
-		}
-	}
+        }
+    }
 }

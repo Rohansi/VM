@@ -1,14 +1,12 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Linq;
-using System.Text;
 
 namespace VM.Devices
 {
     class Debugger
     {
         private VirtualMachine vm;
-        
+
         public Debugger(VirtualMachine virtualMachine)
         {
             vm = virtualMachine;
@@ -55,7 +53,7 @@ namespace VM.Devices
                         failed = true;
                     }
                 }
-                
+
                 if (failed && (vm.IP > 0 || vm.IP < 32000))
                 {
                     res.Add(new DisassemblyLine(previousIP, vm.Memory[vm.IP++].ToString("X")));

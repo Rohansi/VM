@@ -1,5 +1,4 @@
 ﻿using System;
-using System.Collections.Generic;
 using System.Diagnostics;
 using SFML.Graphics;
 using Texter;
@@ -65,24 +64,24 @@ namespace VM.Devices
                     timers[port - 10].DataReceived(data);
                     break;
                 case 20:
-                {
-                    if (data == 0)
                     {
-                        PaletteReset();
-                        return;
-                    }
+                        if (data == 0)
+                        {
+                            PaletteReset();
+                            return;
+                        }
 
-                    for (var i = 0; i < 256; i++)
-                    {
-                        var colorOffset = data + (i * 3);
-                        var r = machine.Memory[colorOffset + 0];
-                        var g = machine.Memory[colorOffset + 1];
-                        var b = machine.Memory[colorOffset + 2];
-                        display.PaletteSet((byte)i, new Color(r, g, b));
-                    }
+                        for (var i = 0; i < 256; i++)
+                        {
+                            var colorOffset = data + (i * 3);
+                            var r = machine.Memory[colorOffset + 0];
+                            var g = machine.Memory[colorOffset + 1];
+                            var b = machine.Memory[colorOffset + 2];
+                            display.PaletteSet((byte)i, new Color(r, g, b));
+                        }
 
-                    break;
-                }
+                        break;
+                    }
             }
         }
 
