@@ -14,7 +14,7 @@ namespace Assembler
     public class Tokenizer
     {
         private const char LineBreak = '\n';
-        private const string Delimiters = ":,[]";
+        private const string Delimiters = ":,[]().+-*/%~&|^#";
 
         private readonly string source;
         private readonly List<BasicToken> tokens;
@@ -220,10 +220,7 @@ namespace Assembler
                         short number;
                         try
                         {
-                            if (!hex)
-                                number = short.Parse(value, CultureInfo.InvariantCulture);
-                            else
-                                number = Convert.ToInt16(value, 16);
+                            number = !hex ? short.Parse(value, CultureInfo.InvariantCulture) : Convert.ToInt16(value, 16);
                         }
                         catch (Exception e)
                         {
@@ -255,11 +252,13 @@ namespace Assembler
         {
             if (pos + str.Length > source.Length)
                 return false;
+			
             return source.Substring(pos, str.Length) == str;
         }
 
         private void AddToken(BasicTokenType type, string value = "")
         {
+			// TODO Fix
             tokens.Add(new BasicToken(type, value, futureLine));
         }
     }
@@ -267,17 +266,19 @@ namespace Assembler
     public struct BasicToken
     {
         public readonly BasicTokenType Type;
+	    public readonly string Filename;
         public readonly int Line;
         public readonly string Value;
 
-        public BasicToken(BasicTokenType type, string value = null, int line = -1)
+		public BasicToken(BasicTokenType type, string value = null, int line = -1, string filename = "")
         {
             Type = type;
+	        Filename = filename;
             Line = line;
             Value = value;
         }
 
-        public bool Matches(BasicToken template)
+	    public bool Matches(BasicToken template)
         {
             if (!string.IsNullOrEmpty(template.Value) && Value != template.Value)
                 return false;
