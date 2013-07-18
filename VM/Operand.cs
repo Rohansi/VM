@@ -24,7 +24,7 @@ namespace VM
             payload = payloadValue;
         }
 
-        public short Get(bool resolvePtr = true)
+        public short Get(bool resolvePtr = true, bool overrideByte = false)
         {
             short val = 0;
             if (type <= 0x0F)
@@ -42,7 +42,7 @@ namespace VM
                 val = (short)((machine.Memory[val + 1] << 8) | machine.Memory[val]);
 
             // don't trim memory locations
-            if (resolvePtr && byteValue)
+            if (resolvePtr && byteValue && !overrideByte)
                 val &= 0xFF;
 
             return val;
@@ -63,7 +63,7 @@ namespace VM
                 return;
             }
 
-            var val = (ushort)PreserveUpper(value, Get(), byteValue);
+            var val = (ushort)PreserveUpper(value, Get(overrideByte: true), byteValue);
             var addr = Get(false);
             machine.Memory[addr] = (byte)(val & 0xFF);
             machine.Memory[addr + 1] = (byte)(val >> 8);

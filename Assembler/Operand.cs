@@ -31,6 +31,7 @@ namespace Assembler
         }
 
         public bool Pointer;
+        public bool Byte;
         public short? Payload;
         public byte[] PayloadBytes
         {
@@ -49,33 +50,36 @@ namespace Assembler
         public string Label;
         public int Line;
 
-        public static Operand FromNumber(short number, bool ptr)
+        public static Operand FromNumber(short number, bool ptr, bool b)
         {
             return new Operand
             {
                 OperandType = OperandType.Number,
                 Pointer = ptr,
+                Byte = b,
                 Payload = number
             };
         }
 
-        public static Operand FromRegister(Registers register, bool ptr)
+        public static Operand FromRegister(Registers register, bool ptr, bool b)
         {
             return new Operand
             {
                 OperandType = OperandType.Register,
                 register = register,
                 Pointer = ptr,
+                Byte = b,
                 Payload = null
             };
         }
 
-        public static Operand FromLabel(string label, int line, bool ptr)
+        public static Operand FromLabel(string label, int line, bool ptr, bool b)
         {
             return new Operand
             {
                 OperandType = OperandType.Label,
                 Pointer = ptr,
+                Byte = b,
                 Label = label,
                 Line = line,
                 Payload = 0

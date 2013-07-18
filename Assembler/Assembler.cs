@@ -119,7 +119,7 @@ namespace Assembler
                 }
                 else if (t.Type == TokenType.Word && new List<string> { "db", "dw", "rb" }.Contains(t.Value.ToLower()))
                 {
-                    string type = t.Value;
+                    string type = t.Value.ToLower();
                     var dataLine = t.Line;
                     t = tokens[++pos];
 
@@ -130,30 +130,39 @@ namespace Assembler
                         {
                             data.Add(t.Value);
                         }
-                        else if (type == "db")
+                        
+                        switch (type)
                         {
-                            byte value;
-                            if (!byte.TryParse(t.Value, out value))
-                                throw new AssemblerException(string.Format("Value out of range (0-255) on line {0}.", t.Line));
+                            case "db":
+                            {
+                                byte value;
+                                if (!byte.TryParse(t.Value, out value))
+                                    throw new AssemblerException(string.Format("Value out of range on line {0}.", t.Line));
 
-                            data.Add(value);
-                        }
-                        else if (type == "dw")
-                        {
-                            short value;
-                            if (!short.TryParse(t.Value, out value))
-                                throw new AssemblerException(string.Format("Value out of range (0-65535) on line {0}.", t.Line));
+                                data.Add(value);
+                                break;
+                            }
+                                
+                            case "dw":
+                            {
+                                short value;
+                                if (!short.TryParse(t.Value, out value))
+                                    throw new AssemblerException(string.Format("Value out of range on line {0}.", t.Line));
 
-                            data.Add(value);
-                        }
-                        else if (type == "rb")
-                        {
-                            int value;
-                            if (!int.TryParse(t.Value, out value))
-                                throw new AssemblerException(String.Format("Value out of range (0-4294967295) on line {0}.", t.Line));
+                                data.Add(value);
+                                break;
+                            }
+                                
+                            case "rb":
+                            {
+                                short value;
+                                if (!short.TryParse(t.Value, out value) || value < 0)
+                                    throw new AssemblerException(String.Format("Value out of range on line {0}.", t.Line));
 
-                            while (value-- > 0)
-                                data.Add(0);
+                                while (value-- > 0)
+                                    data.Add(0);
+                                break;
+                            }
                         }
 
                         pos++;
@@ -249,6 +258,13 @@ namespace Assembler
         {
             var t = tokens[pos];
             var ptr = false;
+            var b = false;
+
+            if (t.Type == TokenType.Word && t.Value.ToLower() == "byte")
+            {
+                b = true;
+                t = tokens[++pos];
+            }
 
             if (t.Type == TokenType.OpenBracket)
             {
@@ -267,11 +283,11 @@ namespace Assembler
                             Registers register;
                             if (Enum.TryParse(t.Value, true, out register))
                             {
-                                return Operand.FromRegister(register, ptr);
+                                return Operand.FromRegister(register, ptr, b);
                             }
                             else
                             {
-                                return Operand.FromLabel(t.Value, t.Line, ptr);
+                                return Operand.FromLabel(t.Value, t.Line, ptr, b);
                             }
                         }
 
@@ -279,14 +295,14 @@ namespace Assembler
                     case TokenType.OpenParentheses:
                     case TokenType.Number:
                         --pos;
-                        return Operand.FromNumber(EvaluateExpression(), ptr);
+                        return Operand.FromNumber(EvaluateExpression(), ptr, b);
 
                     case TokenType.String:
                         {
                             var strBytes = Encoding.GetEncoding(437).GetBytes(t.Value);
                             if (strBytes.Length < 1 || strBytes.Length > 2)
                                 throw new AssemblerException(string.Format("Bad string literal size on line {0}.", t.Line));
-                            return Operand.FromNumber(strBytes.Length == 2 ? BitConverter.ToInt16(strBytes, 0) : (sbyte)strBytes[0], ptr);
+                            return Operand.FromNumber(strBytes.Length == 2 ? BitConverter.ToInt16(strBytes, 0) : (sbyte)strBytes[0], ptr, b);
                         }
                 }
 
@@ -303,8 +319,8 @@ namespace Assembler
 
         private short EvaluateExpression()
         {
-            Stack<ExpressionOperation> operations = new Stack<ExpressionOperation>();
-            Stack<int> stack = new Stack<int>();
+            var operations = new Stack<ExpressionOperation>();
+            var stack = new Stack<int>();
 
             BitwiseExpression(operations);
 
@@ -523,8 +539,9 @@ namespace Assembler
 
         private void Require(TokenType tokenType)
         {
-            if (tokens[pos++].Type != tokenType)
-                throw new AssemblerException("Expected " + tokenType);
+            var token = tokens[pos++];
+            if (token.Type != tokenType)
+                throw new AssemblerException(string.Format("Expected {0} on line {1}", tokenType, token.Line));
         }
 
         private bool Accept(TokenType tokenType)

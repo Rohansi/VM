@@ -47,7 +47,7 @@ namespace Assembler
             else
                 operandCount = 1;
 
-            var extended = (Left != null && Left.Pointer) || (Right != null && Right.Pointer);
+            var extended = (Left != null && (Left.Pointer || Left.Byte)) || (Right != null && (Right.Pointer || Right.Byte));
             var len = operandCount == 0 ? 1 : (extended ? 3 : 2);
 
             var bytes = new byte[len];
@@ -66,14 +66,28 @@ namespace Assembler
             else
             {
                 bytes[0] |= 4;
-                if (Left != null && Left.Pointer)
-                    bytes[0] |= 2;
-                if (Right != null && Right.Pointer)
-                    bytes[0] |= 1;
+
                 if (Left != null)
-                    bytes[1] = (byte)Left.Type;
+                {
+                    bytes[1] = (byte)(Left.Type & 127);
+
+                    if (Left.Pointer)
+                        bytes[0] |= 2;
+
+                    if (Left.Byte)
+                        bytes[1] |= 128;
+                }
+
                 if (Right != null)
-                    bytes[2] = (byte)Right.Type;
+                {
+                    bytes[2] = (byte)(Right.Type & 127);
+
+                    if (Right.Pointer)
+                        bytes[0] |= 1;
+
+                    if (Right.Byte)
+                        bytes[2] |= 128;
+                }
             }
 
             if (Left != null)
