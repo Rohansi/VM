@@ -62,7 +62,7 @@ namespace VM
 
         public void Step(bool overrideTrap = false)
         {
-            if (Flags.HasFlag(Flag.Trap) && !overrideTrap)
+            if ((Flags & Flag.Trap) != 0 && !overrideTrap)
                 return;
 
             instruction.Decode();
@@ -216,35 +216,35 @@ namespace VM
                     break;
 
                 case Instructions.Jz:
-                    if (Flags.HasFlag(Flag.Zero))
+                    if ((Flags & Flag.Zero) != 0)
                         IP = instruction.Left.Get();
                     break;
                 case Instructions.Jnz:
-                    if (!Flags.HasFlag(Flag.Zero))
+                    if ((Flags & Flag.Zero) == 0)
                         IP = instruction.Left.Get();
                     break;
                 case Instructions.Je:
-                    if (Flags.HasFlag(Flag.Equal))
+                    if ((Flags & Flag.Equal) != 0)
                         IP = instruction.Left.Get();
                     break;
                 case Instructions.Ja:
-                    if (Flags.HasFlag(Flag.Above))
+                    if ((Flags & Flag.Above) != 0)
                         IP = instruction.Left.Get();
                     break;
                 case Instructions.Jb:
-                    if (Flags.HasFlag(Flag.Below))
+                    if ((Flags & Flag.Below) != 0)
                         IP = instruction.Left.Get();
                     break;
                 case Instructions.Jae:
-                    if (Flags.HasFlag(Flag.Above) || Flags.HasFlag(Flag.Equal))
+                    if ((Flags & Flag.Above) != 0 || (Flags & Flag.Equal) != 0)
                         IP = instruction.Left.Get();
                     break;
                 case Instructions.Jbe:
-                    if (Flags.HasFlag(Flag.Below) || Flags.HasFlag(Flag.Equal))
+                    if ((Flags & Flag.Below) != 0 || (Flags & Flag.Equal) != 0)
                         IP = instruction.Left.Get();
                     break;
                 case Instructions.Jne:
-                    if (!Flags.HasFlag(Flag.Equal))
+                    if ((Flags & Flag.Zero) == 0)
                         IP = instruction.Left.Get();
                     break;
             }
