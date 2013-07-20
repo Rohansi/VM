@@ -74,7 +74,7 @@ namespace VM
             var sb = new StringBuilder();
 
             if (byteValue)
-                sb.Append("byte ");
+                sb.Append("BYTE ");
             if (pointer)
                 sb.Append("[");
 

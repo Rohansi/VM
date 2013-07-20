@@ -130,38 +130,40 @@ namespace Assembler
                         {
                             data.Add(t.Value);
                         }
-                        
-                        switch (type)
+                        else
                         {
-                            case "db":
+                            switch (type)
                             {
-                                byte value;
-                                if (!byte.TryParse(t.Value, out value))
-                                    throw new AssemblerException(string.Format("Value out of range on line {0}.", t.Line));
+                                case "db":
+                                {
+                                    byte value;
+                                    if (!byte.TryParse(t.Value, out value))
+                                        throw new AssemblerException(string.Format("Value out of range on line {0}.", t.Line));
 
-                                data.Add(value);
-                                break;
-                            }
-                                
-                            case "dw":
-                            {
-                                short value;
-                                if (!short.TryParse(t.Value, out value))
-                                    throw new AssemblerException(string.Format("Value out of range on line {0}.", t.Line));
+                                    data.Add(value);
+                                    break;
+                                }
 
-                                data.Add(value);
-                                break;
-                            }
-                                
-                            case "rb":
-                            {
-                                short value;
-                                if (!short.TryParse(t.Value, out value) || value < 0)
-                                    throw new AssemblerException(String.Format("Value out of range on line {0}.", t.Line));
+                                case "dw":
+                                {
+                                    short value;
+                                    if (!short.TryParse(t.Value, out value))
+                                        throw new AssemblerException(string.Format("Value out of range on line {0}.", t.Line));
 
-                                while (value-- > 0)
-                                    data.Add(0);
-                                break;
+                                    data.Add(value);
+                                    break;
+                                }
+
+                                case "rb":
+                                {
+                                    short value;
+                                    if (!short.TryParse(t.Value, out value) || value < 0)
+                                        throw new AssemblerException(String.Format("Value out of range on line {0}.", t.Line));
+
+                                    while (value-- > 0)
+                                        data.Add(0);
+                                    break;
+                                }
                             }
                         }
 
