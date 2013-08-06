@@ -132,13 +132,15 @@ namespace VM
                     try
                     {
                         var stopwatch = Stopwatch.StartNew();
-                        while (stopwatch.Elapsed.TotalSeconds < (1.0 / Config.Framerate))
+                        while (stopwatch.Elapsed.TotalSeconds < (0.95 / Config.Framerate))
                         {
                             if (steps >= requestedSteps)
                                 break;
 
-                            machine.Step();
-                            steps++;
+                            for (var i = 0; i < 100; i++, steps++)
+                            {
+                                machine.Step();
+                            }
                         }
                     }
                     catch (VmException e)
