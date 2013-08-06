@@ -244,7 +244,7 @@ namespace VM
                         IP = instruction.Left.Get();
                     break;
                 case Instructions.Jne:
-                    if ((Flags & Flag.Zero) == 0)
+                    if ((Flags & Flag.Equal) == 0)
                         IP = instruction.Left.Get();
                     break;
             }
