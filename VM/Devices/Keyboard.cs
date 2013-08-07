@@ -32,25 +32,20 @@ namespace VM.Devices
             window.TextEntered += (sender, args) => QueueKey(args.Unicode);
         }
 
+        public override void Attach(VirtualMachine machine)
+        {
+            machine.RegisterPortInHandler(devPort, () =>
+            {
+                if (keyStrokes.Count == 0)
+                    return 0;
+
+                return keyStrokes.Dequeue();
+            });
+        }
+
         public override void Reset()
         {
             keyStrokes.Clear();
-        }
-
-        public override void DataReceived(short port, short data)
-        {
-
-        }
-
-        public override short? DataRequested(short port)
-        {
-            if (port != devPort)
-                return null;
-
-            if (keyStrokes.Count == 0)
-                return 0;
-
-            return keyStrokes.Dequeue();
         }
 
         private void QueueKey(string key)

@@ -3,7 +3,7 @@ using System.Collections.Generic;
 
 namespace VM
 {
-    class VirtualMachine
+    class VirtualMachine : IDisposable
     {
         [Flags]
         public enum Flag
@@ -25,16 +25,20 @@ namespace VM
         public short IP;
         public short SP;
         public Flag Flags;
-
         public readonly Memory Memory;
-        public List<Device> Devices;
 
+        private List<Device> devices;
+        private Dictionary<short, Func<short>> deviceInHandlers;
+        private Dictionary<short, Action<short>> deviceOutHandlers;
+         
         public VirtualMachine(Memory memory)
         {
             Registers = new short[16];
             Memory = memory;
-            Devices = new List<Device>();
 
+            devices = new List<Device>();
+            deviceInHandlers = new Dictionary<short, Func<short>>();
+            deviceOutHandlers = new Dictionary<short, Action<short>>();
             instruction = new Instruction(this);
         }
 
@@ -54,10 +58,26 @@ namespace VM
                 Memory[i] = 0;
             }
 
-            foreach (var dev in Devices)
+            foreach (var dev in devices)
             {
                 dev.Reset();
             }
+        }
+
+        public void AttachDevice(Device device)
+        {
+            device.Attach(this);
+            devices.Add(device);
+        }
+
+        public void RegisterPortInHandler(short port, Func<short> handler)
+        {
+            deviceInHandlers.Add(port, handler);
+        }
+
+        public void RegisterPortOutHandler(short port, Action<short> handler)
+        {
+            deviceOutHandlers.Add(port, handler);
         }
 
         public void Step(bool overrideTrap = false)
@@ -175,26 +195,24 @@ namespace VM
                     var inPort = instruction.Right.Get();
                     result = 0;
 
-                    foreach (var dev in Devices)
+                    Func<short> inHandler;
+                    if (deviceInHandlers.TryGetValue(inPort, out inHandler))
                     {
-                        var res = dev.DataRequested(inPort);
-                        if (res.HasValue)
-                        {
-                            result = res.Value;
-                            break;
-                        }
+                        result = inHandler();
                     }
 
                     instruction.Left.Set(result);
                     SetZero(result);
                     break;
+
                 case Instructions.Out:
                     var outPort = instruction.Left.Get();
                     var outData = instruction.Right.Get();
 
-                    foreach (var dev in Devices)
+                    Action<short> outHandler;
+                    if (deviceOutHandlers.TryGetValue(outPort, out outHandler))
                     {
-                        dev.DataReceived(outPort, outData);
+                        outHandler(outData);
                     }
                     break;
 
@@ -268,6 +286,14 @@ namespace VM
             Flags &= ~Flag.Zero;
             if (value == 0)
                 Flags |= Flag.Zero;
+        }
+
+        public void Dispose()
+        {
+            foreach (var dev in devices)
+            {
+                dev.Dispose();
+            }
         }
     }
 }

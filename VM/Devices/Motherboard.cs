@@ -7,7 +7,6 @@ namespace VM.Devices
 {
     class Motherboard : Device
     {
-        private VirtualMachine machine;
         private Debugger debugger;
         private Timer[] timers;
         private Random random;
@@ -16,7 +15,6 @@ namespace VM.Devices
 
         public Motherboard(VirtualMachine virtualMachine, TextDisplay textDisplay)
         {
-            machine = virtualMachine;
             display = textDisplay;
 
             debugger = new Debugger(virtualMachine);
@@ -35,6 +33,41 @@ namespace VM.Devices
             }
         }
 
+        public override void Attach(VirtualMachine machine)
+        {
+            machine.RegisterPortInHandler(3, () => debugger.DataRequested());
+            machine.RegisterPortInHandler(9, () => (short)random.Next(short.MinValue, short.MaxValue));
+            machine.RegisterPortInHandler(10, () => timers[0].DataRequested());
+            machine.RegisterPortInHandler(11, () => timers[1].DataRequested());
+            machine.RegisterPortInHandler(12, () => timers[2].DataRequested());
+            machine.RegisterPortInHandler(13, () => timers[3].DataRequested());
+
+            machine.RegisterPortOutHandler(3, s => debugger.DataReceived(s));
+            machine.RegisterPortOutHandler(9, s => random = new Random(s));
+            machine.RegisterPortOutHandler(10, s => timers[0].DataReceived(s));
+            machine.RegisterPortOutHandler(11, s => timers[1].DataReceived(s));
+            machine.RegisterPortOutHandler(12, s => timers[2].DataReceived(s));
+            machine.RegisterPortOutHandler(13, s => timers[3].DataReceived(s));
+
+            machine.RegisterPortOutHandler(20, data =>
+            {
+                if (data == 0)
+                {
+                    PaletteReset();
+                    return;
+                }
+
+                for (var i = 0; i < 256; i++)
+                {
+                    var colorOffset = data + (i * 3);
+                    var r = machine.Memory[colorOffset + 0];
+                    var g = machine.Memory[colorOffset + 1];
+                    var b = machine.Memory[colorOffset + 2];
+                    display.PaletteSet((byte)i, new Color(r, g, b));
+                }
+            });
+        }
+
         public override void Reset()
         {
             random = new Random();
@@ -45,62 +78,6 @@ namespace VM.Devices
             }
 
             PaletteReset();
-        }
-
-        public override void DataReceived(short port, short data)
-        {
-            switch (port)
-            {
-                case 3:
-                    debugger.DataReceived(data);
-                    break;
-                case 9:
-                    random = new Random(data);
-                    break;
-                case 10:
-                case 11:
-                case 12:
-                case 13:
-                    timers[port - 10].DataReceived(data);
-                    break;
-                case 20:
-                    {
-                        if (data == 0)
-                        {
-                            PaletteReset();
-                            return;
-                        }
-
-                        for (var i = 0; i < 256; i++)
-                        {
-                            var colorOffset = data + (i * 3);
-                            var r = machine.Memory[colorOffset + 0];
-                            var g = machine.Memory[colorOffset + 1];
-                            var b = machine.Memory[colorOffset + 2];
-                            display.PaletteSet((byte)i, new Color(r, g, b));
-                        }
-
-                        break;
-                    }
-            }
-        }
-
-        public override short? DataRequested(short port)
-        {
-            switch (port)
-            {
-                case 3:
-                    return debugger.DataRequested();
-                case 9:
-                    return (short)random.Next(short.MinValue, short.MaxValue);
-                case 10:
-                case 11:
-                case 12:
-                case 13:
-                    return timers[port - 10].DataRequested();
-            }
-
-            return null;
         }
 
         private void PaletteReset()

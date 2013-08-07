@@ -62,54 +62,51 @@ namespace VM.Devices
             }
         }
 
+        public override void Attach(VirtualMachine machine)
+        {
+            machine.RegisterPortInHandler(devPort, () =>
+            {
+                switch (state)
+                {
+                    case DeviceState.Identify:
+                        return IdentifyDevice();
+
+                    case DeviceState.Error:
+                        state = DeviceState.None;
+                        return (short)errorCode;
+                }
+
+                return 0;
+            });
+
+            machine.RegisterPortOutHandler(devPort, data =>
+            {
+                switch (state)
+                {
+                    case DeviceState.Read:
+                        ReadDevice((ushort)data);
+                        break;
+
+                    case DeviceState.Write:
+                        WriteDevice((ushort)data);
+                        break;
+
+                    default:
+                        state = (DeviceState)data;
+                        packetOffset = 0;
+                        packet = null;
+                        break;
+                }
+            });
+        }
+
         public override void Reset()
         {
             state = DeviceState.None;
             packetOffset = 0;
         }
 
-        public override void DataReceived(short port, short data)
-        {
-            if (port != devPort)
-                return;
-
-            switch (state)
-            {
-                case DeviceState.Read:
-                    ReadDevice((ushort)data);
-                    break;
-
-                case DeviceState.Write:
-                    WriteDevice((ushort)data);
-                    break;
-
-                default:
-                    state = (DeviceState)data;
-                    packetOffset = 0;
-                    packet = null;
-                    break;
-            }
-        }
-
-        public override short? DataRequested(short port)
-        {
-            if (port != devPort || state == DeviceState.None)
-                return null;
-
-            switch (state)
-            {
-                case DeviceState.Identify:
-                    return IdentifyDevice();
-
-                case DeviceState.Error:
-                    state = DeviceState.None;
-                    return (short)errorCode;
-            }
-
-            return null;
-        }
-
-        private short? IdentifyDevice()
+        private short IdentifyDevice()
         {
             const int packetSize = 4;
 
@@ -139,9 +136,9 @@ namespace VM.Devices
             }
 
             if (packetOffset > packetSize)
-                return null;
+                return 0;
 
-            return (short?)packet[packetOffset++];
+            return (short)packet[packetOffset++];
         }
 
         private void ReadDevice(ushort data)

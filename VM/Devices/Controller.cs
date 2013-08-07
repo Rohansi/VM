@@ -78,22 +78,14 @@ namespace VM.Devices
             };
         }
 
+        public override void Attach(VirtualMachine machine)
+        {
+            machine.RegisterPortInHandler(devPort, () => (short)state);
+        }
+
         public override void Reset()
         {
             state = ControllerKeys.Presence;
-        }
-
-        public override void DataReceived(short port, short data)
-        {
-
-        }
-
-        public override short? DataRequested(short port)
-        {
-            if (port != devPort)
-                return null;
-
-            return (short)state;
         }
     }
 }

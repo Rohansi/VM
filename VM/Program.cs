@@ -51,7 +51,7 @@ namespace VM
 
             statusDisplay = new TextDisplay(200, 1);
 
-            machine.Devices.Add(new Devices.Motherboard(machine, display));
+            machine.AttachDevice(new Devices.Motherboard(machine, display));
 
             var devMap = new Dictionary<string, Type>()
             {
@@ -74,7 +74,7 @@ namespace VM
                     continue;
 
                 var device = (Device)Activator.CreateInstance(devMap[devName], window, machine, devConfig);
-                machine.Devices.Add(device);
+                machine.AttachDevice(device);
             }
 
             var file = Config.DefaultFile;
@@ -191,10 +191,7 @@ namespace VM
                 window.Display();
             }
 
-            foreach (var dev in machine.Devices)
-            {
-                dev.Dispose();
-            }
+            machine.Dispose();
         }
 
         private static void Load(string fileName)

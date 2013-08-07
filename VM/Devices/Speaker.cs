@@ -56,6 +56,26 @@ namespace VM.Devices
             }
         }
 
+        public override void Attach(VirtualMachine machine)
+        {
+            for (var i = 1; i <= 4; i++)
+            {
+                var channel = i;
+                machine.RegisterPortOutHandler((short)(devPort + channel), data =>
+                {
+                    var noteByte = (byte)((ushort)data & 255);
+                    var amplitudeByte = (byte)((ushort)data >> 8);
+
+                    var frequency = NoteToFrequency(noteByte);
+                    var amplitude = (double)amplitudeByte / byte.MaxValue;
+
+                    generators[channel - 1].Frequency = frequency;
+                    generators[channel - 1].Amplitude = amplitude;
+                });
+            }
+            
+        }
+
         public override void Reset()
         {
             foreach (var generator in generators)
@@ -63,38 +83,6 @@ namespace VM.Devices
                 generator.Amplitude = 0;
                 generator.Frequency = 250;
             }
-        }
-
-        public override void DataReceived(short port, short data)
-        {
-            if (port < devPort || port > devPort + 4)
-                return;
-
-            if (port == devPort)
-            {
-                // TODO: device status
-                return;
-            }
-
-            if (port > devPort && port <= devPort + generators.Count)
-            {
-                var noteByte = (byte)((ushort)data & 255);
-                var amplitudeByte = (byte)((ushort)data >> 8);
-
-                var frequency = NoteToFrequency(noteByte);
-                var amplitude = (double)amplitudeByte / byte.MaxValue;
-
-                var generatorIndex = port - devPort - 1;
-                generators[generatorIndex].Frequency = frequency;
-                generators[generatorIndex].Amplitude = amplitude;
-            }
-        }
-
-        public override short? DataRequested(short port)
-        {
-            if (port < devPort || port > devPort + 6)
-                return null;
-            return 0;
         }
 
         public override void Dispose()

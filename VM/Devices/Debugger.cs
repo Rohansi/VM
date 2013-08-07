@@ -22,7 +22,7 @@ namespace VM.Devices
                 vm.Flags &= ~VirtualMachine.Flag.Trap;
         }
 
-        public short? DataRequested()
+        public short DataRequested()
         {
             var enabled = vm.Flags.HasFlag(VirtualMachine.Flag.Trap);
             return (short)(enabled ? 1 : 0);
